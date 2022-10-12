@@ -9,44 +9,43 @@
 #include "ttf.h"
 
 const char cSP = ' ';
-
-void psInitPostscript(FILE *fps)
+void psInitPostscript(FILE *fps, const char* pIndianFontName)
 {
-	static const char *arrPS[][2] = {
-		{NULL,																					NULL},
-		{"%!PS-Adobe-3.0",																		NULL},
-		{"%%Pages: (atend)",																	NULL},
-		{"%%LanguageLevel: 3",																	NULL},
-		{"%%Creator: Marmayogi, Astrologer and Palmist, Sri Mahakali Jothida Nilayam, India.",	NULL},
-		{"%%Title: (Marmayogi Jyothish Software)",												NULL},
-		{"%%DocumentPaperSizes: a4",                                                            NULL},
-		{"%%Orientation: Portrait",	                                                            NULL},
-		{"%%DocumentMedia: Plain 595 842 80 white ()",                                          NULL},
-		{"%%EndComments",																		NULL},
-		{"%%BeginDefaults",																		NULL},
-		{"%%PageMedia: Plain",																	NULL},
-		{"%%PageOrder: Ascend",																	NULL},
-		{"%%PageOrientation: Portrait",                                                         NULL},
-		{"%%EndDefaults",																		NULL},
-		{"%----------------------------------------------------------",							NULL},
-		{"%%BeginProlog",																		NULL},
-		{"%%EndProlog",																			NULL},
-		{"%----------------------------------------------------------",							NULL},
-		{"%%Page: Marmayogi    1",																NULL},
-		{"newpath",																				NULL},
-		{"%----------------------------------------------------------",							NULL},
-		{"/myHelvetica {/Helvetica findfont exch scalefont setfont} bind def",					NULL},			//  15 myHelvetica						# Helvetica is data font
-        {"/myTimesRoman {/Times-Roman findfont exch scalefont setfont} bind def",				NULL},			//  15 myTimesRoman						# Times-Roman is data font
-        {"/myTimesBold {/Times-Bold findfont exch scalefont setfont} bind def",					NULL},			//  15 myTimesBold						# Times-Bold is data font
-        {"/myNoTo {/NotoSansTamil-Regular findfont exch scalefont setfont} bind def",			NULL},			//  15 myNoTo							# Noto Regular Tamil Font (Type 42)
-		{"%----------------------------------------------------------",							NULL},
-		{"/CTXT {dup stringwidth pop 3 -1 roll 2 copy lt {sub neg 2 div 4 -1 roll add 3 -1 roll} {pop pop 3 1 roll} ifelse  moveto show} bind def",NULL},	// Center text. usage: X Y Width (Text) CTX. For example: 36 300 500 (Marmayogi) CTXT
-		{NULL, NULL }
+	static const char *arrPS[] = {
+		"%!PS-Adobe-3.0",
+		"%%Pages: (atend)",
+		"%%LanguageLevel: 3",
+		"%%Creator: Marmayogi, Astrologer and Palmist, Sri Mahakali Jothida Nilayam, Coimbatore, India.",
+		"%%Title: (TTF2PostscriptCID Conversion Software)",
+		"%%DocumentPaperSizes: a4",
+		"%%Orientation: Portrait",
+		"%%DocumentMedia: Plain 595 842 80 white ()",
+		"%%EndComments",
+		"%%BeginDefaults",
+        "%%PageMedia: Plain",
+        "%%PageOrder: Ascend",
+        "%%PageOrientation: Portrait",
+		"%%EndDefaults",
+		"%----------------------------------------------------------",
+		"%%BeginProlog",
+		"%%EndProlog",
+		"%----------------------------------------------------------",
+		"%%Page: Marmayogi    1",
+		"newpath",
+		"%----------------------------------------------------------",
+		"/myHelvetica {/Helvetica findfont exch scalefont setfont} bind def",			                //  15 myHelvetica						# Helvetica is data font
+        "/myTimesRoman {/Times-Roman findfont exch scalefont setfont} bind def",		                //  15 myTimesRoman						# Times-Roman is data font
+        "/myTimesBold {/Times-Bold findfont exch scalefont setfont} bind def",		                    //  15 myTimesBold						# Times-Bold is data font
+        "%----------------------------------------------------------",
+		"/CTXT {dup stringwidth pop 3 -1 roll 2 copy lt {sub neg 2 div 4 -1 roll add 3 -1 roll} {pop pop 3 1 roll} ifelse  moveto show} bind def",	// Center text. usage: X Y Width (Text) CTX. For example: 36 300 500 (Marmayogi) CTXT
 	};
-	short ii = 0;
-	while (arrPS [++ii][0]) {
-        fprintf(fps, "%s\n", arrPS[ii][0]);
+    const short totalElements = sizeof(arrPS) / sizeof(char*);
+    short ii = -1;
+	while (++ii < totalElements) {
+        fprintf(fps, "%s\n", arrPS[ii]);
 	};
+    fprintf(fps, "/myfont {/%s findfont exch scalefont setfont} bind def\n", pIndianFontName);
+
 }
 void psPageNumber(FILE* fps, const int pPageNumber)
 {
@@ -61,8 +60,8 @@ void psPageNumber(FILE* fps, const int pPageNumber)
 }
 void psWriteFooter(FILE* fps)
 {
-    static const char* psLogo = "This software was designed, developed and distributed by Marmayogi, Sri Mahakali Jothida Nilayam, Coimbatore, India.";
-    const short cFooterLogo_x = 70;					// footer logo x co-ordinate
+    static const char* psLogo = "This conversion software was designed, developed and distributed by Marmayogi, Sri Mahakali Jothida Nilayam, Coimbatore, India.";
+    const short cFooterLogo_x = 36;					// footer logo x co-ordinate
     const short cFooterLogo_y = 5;		            // footer logo y co-ordinate
     const short cFooterLine_x = 36;			        // footer line x co-ordinate 
     const short cFooterLine_y = 15;	                // footer line y co-ordinate 
@@ -70,23 +69,25 @@ void psWriteFooter(FILE* fps)
     // set footer
     fprintf(fps, "gsave\n");
     fprintf(fps, "newpath\n");
-    fprintf(fps, "9 myTimesRoman %d %d moveto (%s) show\n", cFooterLogo_x, cFooterLogo_y, psLogo);						    // write logo at footer
+    fprintf(fps, "9 myTimesRoman %d %d %d (%s) CTXT\n", cFooterLogo_x, cFooterLogo_y, cLineLength, psLogo);					// write logo at footer
     fprintf(fps, "0.5 setgray	%d %d moveto 36 %d add 0 rlineto stroke\n", cFooterLine_x, cFooterLine_y, cLineLength);		// write footer line hanging over logo
     fprintf(fps, "grestore\n");
 }
-
+void psSendPageToDevice(FILE* fps)
+{
+    fprintf(fps, "showpage\n");			// print page to postscript device
+}
 void psFlushReport(FILE* fps, const short pPageNum)
 {
-    //printf("newpage=%d\n", m_isnewpage); getchar();
     psWriteFooter(fps);
-    psPageNumber(fps, pPageNum);			        // write page number
-    fprintf(fps, "showpage\n");			            // print page to postscript device}
+    psPageNumber(fps, pPageNum);        // write page number
+    psSendPageToDevice(fps);            // print page to postscript device}
 }
 void psInitNextPage(FILE* fps, const int pPageOrdinal)
 {
     fprintf(fps, "%sPage: Marmayogi %4d\n", "%%", pPageOrdinal);		// page number is made up of a label and an ordinal number
 }
-void printAlphabet_T42(FILE* fps, const short pTotalGlyphs)
+void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char *pIndianFontName)
 {
 	//
 	// This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
@@ -95,9 +96,9 @@ void printAlphabet_T42(FILE* fps, const short pTotalGlyphs)
 	// 1. fps is input parameter of type FILE which holds Postscript program instructions.
 	// 2. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
 	//
-    psInitPostscript(fps);
-    const char* pFontName = "myNoTo";
-    const char* pTitleFontName = "myHelvetica";
+    psInitPostscript(fps, pIndianFontName);
+    const char* pFontName = "myfont";                   // Font to print Glyphs.
+    const char* pTitleFontName = "myHelvetica";         // Font to print Titles
     int pagenum = 0;
 	const short lcResidual = pTotalGlyphs % 128;
 	const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);
@@ -120,7 +121,7 @@ void printAlphabet_T42(FILE* fps, const short pTotalGlyphs)
 				const short yPos = 40 * kk;																// Y-Coordinate.
 				fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
 				fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
-				fprintf(fps, "12 %s\n", pFontName);														// set font to print alphabets.
+				fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
 				fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos_1, yPos, cid);			// print alphabets.
 				fprintf(fps, "11 %s\n", pTitleFontName);												// set font to print character code.
 				fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
@@ -142,29 +143,29 @@ void debugSwap()
 
 
     uint16_t val_16 = 0x6475;
-    printf("big=0x%04x\n", val_16);
-    printf("Hibyte=0x%02x\n", HIBYTE(val_16));
-    printf("Lobyte=0x%02x\n", LOBYTE(val_16));
-    printf("little=0x%04x\n\n", SWAPWORD(val_16));
+    printf("Big Endian     : 0x%04x\n", val_16);
+    printf("  High byte    : 0x%02x\n", HIBYTE(val_16));
+    printf("  Low Byte     : 0x%02x\n", LOBYTE(val_16));
+    printf("Little Endian  : 0x%04x\n\n", SWAPWORD(val_16));
 
     uint32_t val_32 = 0x15251626;
-    printf("big=0x%08x\n", val_32);
-    printf("Loword=0x%02x\n", LOWORD(val_32));
-    printf("Hiword=0x%02x\n", HIWORD(val_32));
-    printf("little=0x%08x\n\n", SWAPLONG(val_32));
+    printf("Big Endian     : 0x%08x\n", val_32);
+    printf("  High Word    : 0x%02x\n", LOWORD(val_32));
+    printf("  Low Word     : 0x%02x\n", HIWORD(val_32));
+    printf("Little Endian  : 0x%08x\n\n", SWAPLONG(val_32));
 
     uint64_t val_64 = 0x3848394915251626;           // 38 48 39 49 | 15 25 16 26
 
 #if _MSC_VER			// Visual Studio
-    printf("big=0x%016llx\n", val_64);
-    printf("Loword=0x%08lx\n", LOLONG(val_64));
-    printf("Hiword=0x%08lx\n", HILONG(val_64));
-    printf("little=0x%016llx\n\n", SWAPLONGLONG(val_64));
+    printf("Big Endian     : 0x%016llx\n", val_64);
+    printf("  High DWord   : 0x%08lx\n", HILONG(val_64));
+    printf("  Low DWord    : 0x%08lx\n", LOLONG(val_64));
+    printf("Little Endian  : 0x%016llx\n\n", SWAPLONGLONG(val_64));
 #elif __GNUC__	|| __CYGWIN__		// gcc
-    printf("big=0x%016lx\n", val_64);
-    printf("Loword=0x%08x\n", LOLONG(val_64));
-    printf("Hiword=0x%08x\n", HILONG(val_64));
-    printf("little=0x%016lx\n\n", SWAPLONGLONG(val_64));
+    printf("Big Endian     : 0x%016lx\n", val_64);
+    printf("  High DWord   : 0x%08x\n", HILONG(val_64));
+    printf("  Low DWord    : 0x%08x\n", LOLONG(val_64));
+    printf("Little Endian  : 0x%016lx\n\n", SWAPLONGLONG(val_64));
 #endif
 
 }
@@ -275,12 +276,14 @@ void debugSubTables(const STTFOffsetSubTable pSubTable, const char* pTrueTypeFon
     fprintf(stdout, "%s\n", ptrLine);
     fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
 }
-void debugListOfTables(const STTFTableDirectory* pListOfTables, const short pTotalTables, const char* pTrueTypeFontFile)
+void debugListOfTables(const STTFTableDirectory* pListOfTables, const short pTotalTables, const short pTotalGlyps, const char* pPostScriptFontName, const char* pTrueTypeFontFile)
 {
     const char* ptrLine = "       --------------------------------------------------------";
     fprintf(stdout, "\n Debug(Directory of Tables)......................................................\n");
     fprintf(stdout, "   True Type Font File                : %s\n", pTrueTypeFontFile);
+    fprintf(stdout, "   Postscript Font Name               : %s\n", pPostScriptFontName);
     fprintf(stdout, "   Total Number of Tables             : %d\n", pTotalTables);
+    fprintf(stdout, "   Total Number of Glyps              : %d\n", pTotalGlyps);
     fprintf(stdout, "%s\n", ptrLine);
     fprintf(stdout, "       Table         Checksum           Offset           Length\n");
     fprintf(stdout, "%s\n", ptrLine);
@@ -302,12 +305,14 @@ void debugListOfNameRecords(const STTFNameRecord* pListOfNameRecords, char **pNa
     static const char* asPlatform[] = {
         "Unicode", "Macintosh", "Reserved", "Microsoft"
     };
+    /**
     static const char* asPlatformSpecific_Macintosh[] = { // total 33
         "Roman", "Japanese", "Chinese(Traditional)",    "Korean",       "Arabic",  "Hebrew",             "Greek", "Russian", "RSymbol", 
         "Devanagari", "Gurmukhi", "Gujarati",           "Oriya",        "Bengali", "Tamil",              "Telugu",   "Kannada", "Malayalam",
         "Sinhalese", "Burmese", "Khmer",                "Thai",         "Laotian", "Georgian",            "Armenian",   "Chinese(Simplified)", "Tibetan",
         "Mongolian", "Geez", "Slavic",                  "Vietnamese",   "Sindhi", "(Uninterpreted)",
     };
+    */
     static const char* asPlatformSpecific[] = {
         "Version 1.0",          // Version 1.0 Semantics
         "Version 1.1",          // Version 1.1 Semantics
@@ -569,41 +574,40 @@ int main(int argc, char* argv[])
 
 #if _MSC_VER			// Visual Studio
     if (fopen_s(&fttf, strTrueTypeFontFile, sFileMode)) {
-        perror("The following error occurred");
-        return (1);
+        perror("The following error occurred");return (1);
     }
-    else printf("\nFile %s has opened for reading\n", strTrueTypeFontFile);
+    else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (fopen_s(&fcid, t42Filenamet, "w")) {
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s has opened for writing\n", t42Filenamet);
+    else printf("File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (fopen_s(&fps, psFilename, "w")) {
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s has opened for writing\n", psFilename);
+    else printf("File %s is opened for writing\n", psFilename);
 
 #elif __GNUC__	|| __CYGWIN__		// gcc
     if (!(fttf = fopen(strTrueTypeFontFile, sFileMode))) {
 	  perror("The following error occurred");
 	  return (1);
     }
-    else printf("\nFile %s has opened for reading\n", strTrueTypeFontFile);
+    else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (!(fcid = fopen(t42Filenamet, "w"))) {
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s has opened for writing\n", t42Filenamet);
+    else printf("File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (!(fps = fopen(psFilename, "w"))) {
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s has opened for writing\n", psFilename);
+    else printf("File %s is opened for writing\n", psFilename);
 
 #endif
 
@@ -1064,7 +1068,7 @@ int main(int argc, char* argv[])
         uint32_t lengthOfCvtTable = listOfTables[idxCvtTable].length;                 // length of the 'cvt' table in bytes
         printf("lengthOfCvtTable=%d\n", lengthOfCvtTable);
         if (!(listOfCvt = new STTFCvtTable[lengthOfCvtTable])) {               // Allocate memeory
-            fprintf(stdout, " main(): Memory Allocation error for object STTFCvtTable. Total Offsets: %d.\n", lengthOfCvtTable); // error
+            fprintf(stdout, " main(): Memory Allocation error for object STTFCvtTable. Total Offsets: %u.\n", lengthOfCvtTable); // error
             fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         for (uint16_t ii = 0; ii < lengthOfCvtTable; ii++) {
@@ -1100,10 +1104,10 @@ int main(int argc, char* argv[])
     fprintf(fcid, "%% CIDInit is required for i) Building a Type 0 CIDFont or ii) Creating CMap dictionary.\n");
     fprintf(fcid, "%% A CMap dictionary is created with the assistance of operators defined in the CIDInit procedure set.\n");
     fprintf(fcid, "%% CIDInit procedure set is an instance of the ProcSet resource category.\n");  // 
-    fprintf(fcid, "%% The use of these operators to construct a CMap for a CIDkeyed font is discussed in Section 5.11.5, 'FMapType 9 Composite Fonts.'\n");  // 
+    fprintf(fcid, "%% The use of these operators to construct a CMap for a CIDkeyed font has been discussed in Section 5.11.5, 'FMapType 9 Composite Fonts.'\n");  // 
     fprintf(fcid, "%% --------------------------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "/CIDInit /ProcSet findresource begin\n");        // Building CMap dictionary. The operators needed to construct a CMap dictionary are contained in the CIDInit procedure set (an instance of the ProcSet resource category).
-    fprintf(fcid, "  6 dict begin\n");                             // Dictionary construction begins with space for 10 key-value pairs.
+    fprintf(fcid, "  6 dict begin\n");                              // Dictionary construction begins with space for 10 key-value pairs.
     fprintf(fcid, "     begincmap\n");                              // This is must
     fprintf(fcid, "       /CMapType 1 def\n");                      // The CMap type, indicating how the CMap is organized. The only defined values are 0 and 1, which are equivalent; 1 is recommended.
     fprintf(fcid, "       /CMapName /Identity-H def\n");            // The name of the CMap. Ordinarily, it is the same as the key given to defineresource when defining the dictionary as an instance of the CMap resource category
@@ -1173,9 +1177,9 @@ int main(int argc, char* argv[])
     fprintf(fcid, "\n%% ---------------------------------------------------------------------------------------------\n");
     fprintf(fcid, "%% Construct sfnts array which is a set of hex strings representing entire ttf file binary data.\n");
     fprintf(fcid, "%% ---------------------------------------------------------------------------------------------\n\n");
-    fprintf(fcid, "Mycidfont /sfnts [\n");                                      // sfnts array definition begins. This is a hex string representing entire ttf file binary data.
+    fprintf(fcid, "Mycidfont /sfnts [\n");                                                  // sfnts array definition begins. This is a set of hex string representing entire ttf file binary data.
     embedTablesAsHexStrings_sfnts(fttf, fcid, ttfSubTable, listOfTables, numOfTables);      // Embed tables as Hex String delimted by angle brackets.
-    fprintf(fcid, "] readonly put\n");                                          // sfnts array Definition ends. This is a read-only array object.
+    fprintf(fcid, "] readonly put\n");                                                      // sfnts array Definition ends. This is a read-only array object.
     fprintf(fcid, "\n%% -------------------------------------------------------------------------------------------------------------\n");
     fprintf(fcid, "%% i)  Operator defineresource registers instance of Mycidfont with /CIDFont resource category.\n");
     fprintf(fcid, "%% ii) Operator composefont creates a Type 0 font with the name CIDFontName.\n");
@@ -1183,15 +1187,15 @@ int main(int argc, char* argv[])
     fprintf(fcid, "%% -------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "Mycidfont dup /CIDFontName get exch /CIDFont defineresource\n");  // Register instance of Mycidfont with /CIDFont resource category.
     fprintf(fcid, "/CIDFontName get /Identity-H [2 index] composefont pop\n");       // Type 0 Composite font. Operator composefont creates a Type 0 font with the name CIDFontName. Note that Type 0 fonts with FMapType 9 require a CMap entry in the font dictionary which is /Identity-H.
-    fclose(fttf);                           // close ttf file handle.
-    fclose(fcid);                           // close cid file handle.
-    printAlphabet_T42(fps, numOfGlyphs);    // Print Glyphs
-    fclose(fps);                            // close ps file handle.
+    fclose(fttf);                                           // close ttf file handle.
+    fclose(fcid);                                           // close cid file handle.
+    printAlphabet_T42(fps, numOfGlyphs, strPSFontName);     // Print Glyphs along with corresponding CIDs
+    fclose(fps);                                            // close Postscript file handle.
     if (isdisplay) {
         //debugString();
-        debugSubTables(ttfSubTable, strTrueTypeFontFile);                                           // debug Sub table
-        debugListOfTables(listOfTables, numOfTables, strTrueTypeFontFile);                          // Debug List of Tables
-        debugListOfNameRecords(listOfNameRecords, nameList, cntNameRecord, strTrueTypeFontFile);    // Debug List of Name Records.
+        debugSubTables(ttfSubTable, strTrueTypeFontFile);                                                   // debug Sub table
+        debugListOfTables(listOfTables, numOfTables, numOfGlyphs, strPSFontName, strTrueTypeFontFile);      // Debug List of Tables
+        debugListOfNameRecords(listOfNameRecords, nameList, cntNameRecord, strTrueTypeFontFile);            // Debug List of Name Records.
     }
 
     if (listOfTables) delete[]listOfTables;                                 // release allocated memory
@@ -1209,6 +1213,14 @@ int main(int argc, char* argv[])
     if (listOfPrep) delete[]listOfPrep;                                     // release allocated memory for 'prep' table.
     if (listOfFpgm) delete[]listOfFpgm;                                     // release allocated memory for 'fpgm' table.
     if (listOfCvt) delete[]listOfCvt;                                       // release allocated memory for 'cvt' table.
-    printf("Conversion has been successfully completed.\n\n");
+    printf("\nConversion has been successfully completed and the following two files have been generated.\n");
+    printf("  1. %s is the connverted file corresponding to the TrueType font file %s.\n", t42Filenamet, strTrueTypeFontFile);
+#if _MSC_VER			// Visual Studio
+    printf("  2. %s is a postscript program file executable either through gswin64c.exe (ghostscript) or through gsview.exe.\n", psFilename);
+#elif __GNUC__	|| __CYGWIN__		// gcc
+    printf("  2. %s is a postscript program file executable either through gs (ghostscript) or through gsview.\n", psFilename);
+#endif
+    printf("     This postscript program displays Glyphs present in the character set along with the corresponding CIDs.\n");
+    printf("     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
     exit(0);
 }
