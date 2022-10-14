@@ -1,4 +1,9 @@
-// TTF2PostscriptCID.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+// This Conversion program was written by Marmayogi, Astrologer and Palmist, Sri Mahakali Jyothida Nilayam, Coimbatore, India.
+// This Converts TTF to a Type 2 CIDFont, with base font Type 42, which can be accessed through a postscript program.
+// This is particulary useful for Indian Languages having glyphs in excess of 255 in the character set.
+// 
+// Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
 //
 
 #include <stdio.h>
