@@ -19,6 +19,7 @@ This conversion utility supports 3rd approach.
 - This utility is a console application developed on Microsoft Visual Studio Community 2022 (64-bit) Edition- Version 17.3.5 under Windows 10.
 - This utility is also available in Linux platform.
 - Note that this program is 100% portable across Windows-10 and Linux. i.e. The source files (main.ccp and ttf.h) are same and identical across platforms.
+- Ghostsciprt version is 9.52 (64 bit) and GSView version is 5.0 (64 bit).
 
 
 ##### References
