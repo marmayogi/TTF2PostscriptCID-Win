@@ -1086,7 +1086,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    //printf("NumOfGlyphs=%d numberOfHMetrics = %u", numOfGlyphs, numberOfHMetrics); getchar();
+    //printf("NumOfGlyphs=%d numberOfHMetrics = %u cntNameRecord=%d", numOfGlyphs, numberOfHMetrics, cntNameRecord); getchar();
 
     const double emUnit = 1000.0 / static_cast<double>(headTable.unitsPerEm);   // The space required in termos of 1000 units for character 'M'.
     const char* strCopyRight = nameList[0];                                     // code 0 represents copy right.
@@ -1151,15 +1151,15 @@ int main(int argc, char* argv[])
     fprintf(fcid, "         2 copy dup 2 mul exch -8 bitshift put\n");          // Store low order byte of cid whose value is between 0 and numOfGlyphs-1.
     fprintf(fcid, "         1 index exch dup 2 mul 1 add exch 255 and put\n");  // Store high order byte of cid whose value is between 0 and numOfGlyphs-1.
     fprintf(fcid, "      } for\n");                                             // End of for loop.
-    fprintf(fcid, "   def\n");                                      // CIDMap string has been defined.
-    fprintf(fcid, "   /FontInfo 16 dict dup begin\n");              // (Optional) A dictionary containing font information that is not accessed by the PostScript interpreter.
+    fprintf(fcid, "   def\n");                                                  // CIDMap string has been defined.
+    fprintf(fcid, "   /FontInfo 16 dict dup begin\n");                          // (Optional) A dictionary containing font information that is not accessed by the PostScript interpreter.
     fprintf(fcid, "      /version (%d.%d) readonly def\n", maxpTable.version.whole, maxpTable.version.frac); // Set to 0 if the font is proportionally spaced, non-zero if the font is not proportionally spaced (i.e. monospaced).
-    fprintf(fcid, "      /Notice (%s) readonly def\n", strTradeMark);        // Notice that displays trade mark of the font.
-    fprintf(fcid, "      /Copyright (%s) readonly def\n", strCopyRight);     // Copy Right.
-    fprintf(fcid, "      /FamilyName (%s) readonly def\n", strFontFamily);   // Font Family name.
-    fprintf(fcid, "      /FullName (%s) readonly def\n", strFontFullName);   // Font Full name.
-    fprintf(fcid, "      /Weight (%s) readonly def\n", strFontWeight);       // Font Weight class.
-    fprintf(fcid, "      /Style (%s) readonly def\n", strFontStyle);         // Font Style
+    fprintf(fcid, "      /Notice (%s) readonly def\n", cntNameRecord < 8 ? "": strTradeMark);   // Notice that displays trade mark of the font.
+    fprintf(fcid, "      /Copyright (%s) readonly def\n", strCopyRight);                        // Copy Right.
+    fprintf(fcid, "      /FamilyName (%s) readonly def\n", strFontFamily);                      // Font Family name.
+    fprintf(fcid, "      /FullName (%s) readonly def\n", strFontFullName);                      // Font Full name.
+    fprintf(fcid, "      /Weight (%s) readonly def\n", strFontWeight);                          // Font Weight class.
+    fprintf(fcid, "      /Style (%s) readonly def\n", strFontStyle);                            // Font Style
     fprintf(fcid, "      /isFixedPitch %s def\n", postTable.isFixedPitch ? "true" : "false");   // Set to 0 if the font is proportionally spaced, non-zero if the font is not proportionally spaced (i.e. monospaced).
     fprintf(fcid, "      /isSymbolFont %s def\n", os2Table.panose[0] == 5 ? "true" : "false");  // Some applications will use Family Kind = 5 (Latin Symbol) to identify symbol fonts, which might affect font selection or fallback behaviors. There are no requirements for how applications should use the panose values.
     fprintf(fcid, "      /ItalicAngle %d.%d def\n", postTable.italicAngle.whole, postTable.italicAngle.frac);   // Italic angle in counter-clockwise degrees from the vertical. Zero for upright text, negative for text that leans to the right (forward).
