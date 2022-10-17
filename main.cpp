@@ -127,8 +127,8 @@ void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char *pIndianF
 				fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
 				fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
 				fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
-				fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos_1, yPos, cid);			// print alphabets.
-				fprintf(fps, "11 %s\n", pTitleFontName);												// set font to print character code.
+                fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos_1, yPos, cid);           // print alphabets
+                fprintf(fps, "11 %s\n", pTitleFontName);												// set font to print character code.
 				fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
 				cntGlyph++;
 			}
@@ -1094,7 +1094,7 @@ int main(int argc, char* argv[])
     const char* strFontStyle = nameList[2];                                     // code 2 represents font Style.
     const char* strFontFullName = nameList[4];                                  // code 4 represents font full name.
     const char *strPSFontName = nameList[6];                                    // code 6 represents name of Postscript font.
-    const char* strTradeMark = nameList[7];                                     // code 7 represents Trademark.
+    const char* strTradeMark = cntNameRecord < 8 ? "" : nameList[7];            // code 7 represents Trademark.
     const char* strFontWeight = getWeight(os2Table.usWeightClass);              // Font Weight Class.
 
     /**
@@ -1154,7 +1154,7 @@ int main(int argc, char* argv[])
     fprintf(fcid, "   def\n");                                                  // CIDMap string has been defined.
     fprintf(fcid, "   /FontInfo 16 dict dup begin\n");                          // (Optional) A dictionary containing font information that is not accessed by the PostScript interpreter.
     fprintf(fcid, "      /version (%d.%d) readonly def\n", maxpTable.version.whole, maxpTable.version.frac); // Set to 0 if the font is proportionally spaced, non-zero if the font is not proportionally spaced (i.e. monospaced).
-    fprintf(fcid, "      /Notice (%s) readonly def\n", cntNameRecord < 8 ? "": strTradeMark);   // Notice that displays trade mark of the font.
+    fprintf(fcid, "      /Notice (%s) readonly def\n", strTradeMark);                           // Notice that displays trade mark of the font.
     fprintf(fcid, "      /Copyright (%s) readonly def\n", strCopyRight);                        // Copy Right.
     fprintf(fcid, "      /FamilyName (%s) readonly def\n", strFontFamily);                      // Font Family name.
     fprintf(fcid, "      /FullName (%s) readonly def\n", strFontFullName);                      // Font Full name.
