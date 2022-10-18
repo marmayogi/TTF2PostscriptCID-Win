@@ -65,7 +65,7 @@ In order to test **NotoSansTamil-Regular.t42** CIDfont file, edit a file **tamil
 showpage
 ```
 
-Issue the command  to execute the `tamil.ps` postscript program. 
+Issue the following Ghostscript command  to execute the `tamil.ps` postscript program. 
 - `gswin64c.exe "D:\cidfonts\NotoSansTamil-Regular.t42" "D:\cidfonts\tamil.ps`
 
 This will display strings `தமிழ் தங்களை வரவேற்கிறது!` and `Tamil Welcomes You!`.
