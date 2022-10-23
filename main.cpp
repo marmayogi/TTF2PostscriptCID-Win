@@ -1701,7 +1701,7 @@ int main(int argc, char* argv[])
 #elif __GNUC__	|| __CYGWIN__		// gcc
     printf("  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
 #endif
-    printf("     This postscript program displays Glyphs present in the character set along with the corresponding CIDs.\n");
+    printf("     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
     printf("     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
     exit(0);
 }
