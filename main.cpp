@@ -609,9 +609,9 @@ void debugCMapSegmeentArrayFormat_12(const STTFCmapTable_Format_12 pCmapFormat, 
     const short dividend = pCmapFormat.numGroups / 3;                           // modulus of 3.
     const uint16_t groupLHS = dividend + (remainder == 1 || remainder == 2);    // Group at left hand side.
     const uint16_t groupMid = dividend + (remainder == 2);                      // Group at middle.
-    const uint16_t segmentRHS = dividend;                                       // Group at right hand side.
+    const uint16_t groupRHS = dividend;                                         // Group at right hand side.
     for (uint32_t ii=0, jj=0, kk=0; ii < groupLHS; ii++, jj++, kk++) {
-        fprintf(stdout, "  %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu",
+        fprintf(stdout, "  %3d)  %-7u %*cU+%06X %*c%-7u %*cU+%06X %*c%7u",
             ii + 1,
             pGroupRecord[ii].startCharCode,                     // Starting character code for each segment.
             4, cSP, pGroupRecord[ii].startCharCode,             // Unicode Point.
@@ -621,7 +621,7 @@ void debugCMapSegmeentArrayFormat_12(const STTFCmapTable_Format_12 pCmapFormat, 
          );
         if (jj < groupMid) {
             uint16_t mm = groupLHS + jj;
-            fprintf(stdout, "%*c %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu",
+            fprintf(stdout, "%*c %3d)  %-7u %*cU+%06X %*c%-7u %*cU+%06X %*c%7u",
                 10, cSP,
                 mm + 1,
                 pGroupRecord[mm].startCharCode,                     // Starting character code for each segment.
@@ -631,9 +631,9 @@ void debugCMapSegmeentArrayFormat_12(const STTFCmapTable_Format_12 pCmapFormat, 
                 9, cSP, pGroupRecord[mm].startGlyphID               // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
             );
         }
-        if (kk < segmentRHS) {
+        if (kk < groupRHS) {
             uint16_t nn = groupLHS + groupMid + kk;
-            fprintf(stdout, "%*c %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu\n",
+            fprintf(stdout, "%*c %3d)  %-7u %*cU+%06X %*c%-7u %*cU+%06X %*c%7u\n",
                 10, cSP,
                 nn + 1,
                 pGroupRecord[nn].startCharCode,                     // Starting character code for each segment.
