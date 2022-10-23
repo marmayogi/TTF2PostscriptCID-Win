@@ -171,6 +171,56 @@ typedef struct STTFMaxpTable {  // The 'mapf' table. Total elements 15.
     uint16_t maxComponentDepth;         // levels of recursion, set to 0 if font has only simple glyphs
 } STTFMaxpTable;
 
+// The 'cmap' table begins with a table Header consisting of version number followed by the number of encoding tables.
+// The encoding subtables follow the header.
+typedef struct STTFCmapTable_Header {  // The 'cmap' table begins with a table Header consisting of version number followed by the number of encoding tables.
+    uint16_t version;                    // Table version number (0).
+    uint16_t numTables;                  // Number of encoding tables that follow. Note that only one of these encoding subtables is used at a time.
+} STTFCMapTable_Header;
+
+typedef struct STTFCmapTable_Encoding {  // The 'cmap' table begins with a table Header consisting of version number followed by the number of encoding tables.
+    uint16_t platformID;                // Platform identifier. 0=Unicode, 1=Macintosh, 2=reserved and 3=Microsoft
+    uint16_t platformSpecificID;        // Platform-specific encoding ID.
+    uint32_t offset;                    // Byte offset from beginning of table to the subtable for this encoding.
+} STTFCmapTable_Encoding;
+
+// Format 12 is required for Unicode fonts covering characters above U+FFFF on Windows.
+// It is the most useful of the cmap formats with 32-bit support.
+typedef struct STTFCmapTable_Format_12 {  // 'cmap' Subtable Format 12:
+    uint16_t format;                    // Subtable format; set to 12.
+    uint16_t reserved;                  // Reserved; set to 0.
+    uint32_t length;                    // Byte length of this subtable (including the header).
+    uint32_t language;                  // For requirements on use of the language field.
+    uint32_t numGroups;                 // Number of groupings which follow.
+} STTFCmapTable_Format_12;
+
+typedef struct STTFCmapTable_SequentialMapGroup_Record {  // Each sequential map group record specifies a character range and the starting glyph ID mapped from the first character.
+    uint32_t startCharCode;             // First character code in this group.
+    uint32_t endCharCode;               // Last character code in this group.
+    uint32_t startGlyphID;              // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+} STTFCmapTable_SequentialMapGroup_Record;
+
+// Format 4 is a two-byte encoding format.
+// It should be used when the character codes for a font fall into several contiguous ranges, possibly with holes in some or all of the ranges. 
+// That is, some of the codes in a range may not be associated with glyphs in the font. Two-byte fonts that are densely mapped should use Format 6..
+typedef struct STTFCmapTable_Format_4 {  // 'cmap' Subtable Format 12:
+    uint16_t format;                    // Subtable format; set to 4.
+    uint16_t length;                    // This is the length in bytes of the subtable.
+    uint16_t language;                  // For requirements on use of the language field.
+    uint16_t segCountX2;                // 2 × segCount.
+    uint16_t searchRange;               // Maximum power of 2 less than or equal to segCount, times 2. i.e. ((2**floor(log2(segCount))) * 2, where “**” is an exponentiation operator)
+    uint16_t entrySelector;             // Log2 of the maximum power of 2 less than or equal to numTables (log2(searchRange/2), which is equal to floor(log2(segCount)))
+    uint16_t rangeShift;                // segCount times 2, minus searchRange ((segCount * 2) - searchRange)
+} STTFCmapTable_Format_4;
+
+typedef struct STTFCmapTable_Format_4_Segment_Array {  // Four parallel arrays describing the segments (one segment for each contiguous range of codes)
+    uint16_t* endCode;                  //	Ending character code for each segment, last = 0xFFFF. Allocate memory for the array with segCount size.
+    uint16_t reservedPad;               //	This value should be zero.
+    uint16_t* startCode;                //	Starting character code for each segment. Allocate memory for the array with segCount size.
+    uint16_t* idDelta;                  //	Delta for all character codes in segment. Allocate memory for the array with segCount size.
+    uint16_t* idRangeOffset;            //	Offset in bytes to glyph indexArray, or 0. Allocate memory for the array with segCount size.
+} STTFCmapTable_Format_4_Segment_Array;
+
 typedef struct STTFPostTable {  // The 'post' table. Total elements 9.
     struct {
         int16_t whole;                  // Whole part of format. If format is 2.5 then, whole will hold 2.

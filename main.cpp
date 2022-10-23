@@ -318,12 +318,14 @@ void debugListOfNameRecords(const STTFNameRecord* pListOfNameRecords, char **pNa
         "Mongolian", "Geez", "Slavic",                  "Vietnamese",   "Sindhi", "(Uninterpreted)",
     };
     */
-    static const char* asPlatformSpecific[] = {
+    static const char* asPlatformSpecific_Unicode[] = {
         "Version 1.0",          // Version 1.0 Semantics
         "Version 1.1",          // Version 1.1 Semantics
         "ISO-10646",            // ISO-10646 1993 Semantics
         "Unicode",              // Unicode semantics(BMP only)
         "Unicode"               // Unicode semantics(non-BMP allowed)
+        "Unicode Variation"     // Unicode Variation Sequences
+        "Last Resort"           // Last Resort
     };
     static const char* asNameString[] = { // total 25
         "Copyright", "Family", "Style",                 "Unique",    "Font", "Version",                     "PostScript", "Trade Mark", "Manufacturer",
@@ -343,7 +345,7 @@ void debugListOfNameRecords(const STTFNameRecord* pListOfNameRecords, char **pNa
         //printf("%2d) platformID=%d specific=%d", ii+1, pListOfNameRecords[ii].platformID, pListOfNameRecords[ii].platformSpecificID); getchar();
         char bufPlatform[20], bufPlatformSpecific[20], bufName[30];
         sprintf_s(bufPlatform, sizeof(bufPlatform), "%1u (%s)", pListOfNameRecords[ii].platformID, asPlatform[pListOfNameRecords[ii].platformID]);
-        sprintf_s(bufPlatformSpecific, sizeof(bufPlatformSpecific), "%1u (%s)", pListOfNameRecords[ii].platformSpecificID, asPlatformSpecific[pListOfNameRecords[ii].platformSpecificID]);
+        sprintf_s(bufPlatformSpecific, sizeof(bufPlatformSpecific), "%1u (%s)", pListOfNameRecords[ii].platformSpecificID, asPlatformSpecific_Unicode[pListOfNameRecords[ii].platformSpecificID]);
         const char* sName = (pListOfNameRecords[ii].nameID <= 25) ? asNameString[pListOfNameRecords[ii].nameID] : pListOfNameRecords[ii].nameID >= 256 ? "Variations" :"Reserved";
         sprintf_s(bufName, sizeof(bufName), "%3u (%s)", pListOfNameRecords[ii].nameID, sName);
         fprintf(stdout, "  %2d)  %-14s %*c%-15s %*c%5u %*c%-25s %*c%5u %*c%5u %*c%.*s\n",
@@ -358,6 +360,292 @@ void debugListOfNameRecords(const STTFNameRecord* pListOfNameRecords, char **pNa
         );
     } while (++ii < pTotalNameRecords);
     fprintf(stdout, "%s\n", ptrLine);
+    fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
+}
+void debugListOfCMapEncodingRecords(const STTFCmapTable_Encoding* pListOfCmapEncodingRecords, const short pTotalEncodingRecords, const char* pTrueTypeFontFile)
+{
+    static const char* asPlatform[] = {
+        "Unicode", "Macintosh", "Reserved", "Microsoft"
+    };
+    // BMP characters have these characteristics: Their code point values are between 0 and 65535 (or U+0000 and U+FFFF ). 
+    // They can be encoded in a variable-length encoding using 8, 16, or 24 bits (1 to 3 bytes). 
+    // They can be encoded in a fixed-length encoding using 16 bits (2 bytes).
+    static const char* asPlatformSpecific[4][33] = {
+        {// Unicode
+            "Version 1.0",              // Version 1.0 Semantics
+            "Version 1.1",              // Version 1.1 Semantics
+            "ISO-10646",                // ISO-10646 1993 Semantics
+            "Unicode BMP-only",         // Unicode semantics(BMP only). BMP=Basic Multilingual Plane 
+            "Unicode non-BMP allowed",  // Unicode semantics(non-BMP allowed)
+            "Unicode Variation",        // Unicode Variation Sequences
+            "Last Resort",              // Last Resort
+        },
+        {// Macintosh
+            "Roman", "Japanese", "Chinese(Traditional)",    "Korean",       "Arabic",  "Hebrew",             "Greek", "Russian", "RSymbol",
+            "Devanagari", "Gurmukhi", "Gujarati",           "Oriya",        "Bengali", "Tamil",              "Telugu",   "Kannada", "Malayalam",
+            "Sinhalese", "Burmese", "Khmer",                "Thai",         "Laotian", "Georgian",            "Armenian",   "Chinese(Simplified)", "Tibetan",
+            "Mongolian", "Geez", "Slavic",                  "Vietnamese",   "Sindhi", "(Uninterpreted)",
+        },
+        {// Reserved
+            "",
+        },
+        {// Microsoft
+          "Symbol",             // A format 4 subtable would be used, typically with up to 224 graphic characters assigned at code positions beginning with 0xF020.
+          "Unicode BMP-only",   // Fonts that support only Unicode BMP characters (U+0000 to U+FFFF) on the Windows platform must use encoding 1 with a format 4 subtable.
+          "Shift-JIS",
+          "Shift-PRC",
+          "BigFive",
+          "Johab",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Unicode UCS-4"       // Fonts that support Unicode supplementary-plane characters (U+10000 to U+10FFFF) with Format 12 subtable.",    // Unicode full repertoire
+        },
+    };
+    static const char* asRemarks[4][11] = { // 
+        {// Unicode platform (platform ID = 0)
+        "deprecated",
+        "deprecated",
+        "deprecated",
+        "Encoding ID 3 should be used in conjunction with 'cmap' subtable formats 4 or 6.",
+        "Encoding ID 4 should be used in conjunction with 'cmap' subtable formats 10 or 12.",
+        "Encoding ID 5 should use 'cmap' subtable format 14.",
+        "Encoding ID 6 should use 'cmap' subtable format 13.",
+      },
+      {// Macintosh platform (platform ID = 1)
+          "",
+      },
+      {// Deprecated
+          "",
+      },
+      {// Microsoft platform (platform ID = 3)
+
+          "Symbol (beginning with U+F020 typically with up to 224 graphic characters)",     // A format 4 subtable would be used, typically with up to 224 graphic characters assigned at code positions beginning with 0xF020.
+          "Unicode BMP-only (UCS-2) characters (U+0000 to U+FFFF) with Format 4 subtable.", // Fonts that support only Unicode BMP characters (U+0000 to U+FFFF) on the Windows platform must use encoding 1 with a format 4 subtable.
+          "Shift-JIS",
+          "Shift-PRC",
+          "BigFive",
+          "Johab",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Unicode UCS-4. Fonts that support Unicode supplementary-plane characters (U+10000 to U+10FFFF) with Format 12 subtable.",    // Unicode full repertoire
+     }
+    };
+    const char* ptrLine = "       -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------";
+    fprintf(stdout, "\n Debug(CMap Encoding Subtables).............................................................................................................................................................\n");
+    fprintf(stdout, "   True Type Font File                      : %s\n", pTrueTypeFontFile);
+    fprintf(stdout, "   Total Number of Cmap Encoding Subtables  : %d\n", pTotalEncodingRecords);
+    fprintf(stdout, "%s\n", ptrLine);
+    fprintf(stdout, "       Platform         Platform Specific                  Offset\n");
+    fprintf(stdout, "       Identifier       Encoding Identifier               (bytes)    Remarks\n");
+    fprintf(stdout, "%s\n", ptrLine);
+    short ii = 0;
+    do {
+        const uint16_t pid = pListOfCmapEncodingRecords[ii].platformID;             // Platform ID
+        const uint16_t psid = pListOfCmapEncodingRecords[ii].platformSpecificID;    // platform Specific ID
+        //printf("%2d) platformID=%d specific=%d", ii+1, pListOfNameRecords[ii].platformID, pListOfNameRecords[ii].platformSpecificID); getchar();
+        char bufPlatform[20], bufPlatformSpecific[50];
+        sprintf_s(bufPlatform, sizeof(bufPlatform), "%1u (%s)", pid, asPlatform[pid]);
+        sprintf_s(bufPlatformSpecific, sizeof(bufPlatformSpecific), "%2u (%s)", psid, asPlatformSpecific[pid][psid]);
+        fprintf(stdout, "  %2d)  %-14s %*c%-28s %*c%5u %*c%s\n",
+            ii + 1,
+            bufPlatform,                                       // Platform identifier code.
+            2, cSP, bufPlatformSpecific,                       // Platform-specific encoding identifier.
+            7, cSP, pListOfCmapEncodingRecords[ii].offset,     // Byte offset from beginning of table to the subtable for this encoding.
+            3, cSP, asRemarks[pid][psid]                       // Byte offset from beginning of table to the subtable for this encoding.
+        );
+    } while (++ii < pTotalEncodingRecords);
+    fprintf(stdout, "%s\n", ptrLine);
+    fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
+}
+void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, const STTFCmapTable_Format_4_Segment_Array pSegArray, const uint16_t pSegmentCount, const uint16_t pPlatformID, const uint16_t pPlatformSpecificID, const char* pTrueTypeFontFile)
+{
+    static const char* asPlatform[] = {
+        "Unicode", "Macintosh", "Reserved", "Microsoft"
+    };
+    // BMP characters have these characteristics: Their code point values are between 0 and 65535 (or U+0000 and U+FFFF ). 
+    // They can be encoded in a variable-length encoding using 8, 16, or 24 bits (1 to 3 bytes). 
+    // They can be encoded in a fixed-length encoding using 16 bits (2 bytes).
+    static const char* asPlatformSpecific[4][33] = {
+        {// Unicode
+            "Version 1.0 semantics",                                        // Version 1.0 Semantics
+            "Version 1.1 semantics",                                        // Version 1.1 Semantics
+            "ISO 10646 1993 semantics (deprecated)",                        // ISO-10646 1993 Semantics
+            "Unicode 2.0 or later semantics (BMP only)",                    // Unicode semantics(BMP only). BMP=Basic Multilingual Plane 
+            "Unicode 2.0 or later semantics (non-BMP characters allowed)",  // Unicode semantics(non-BMP allowed)
+            "Unicode Variation Sequences",                                  // Unicode Variation Sequences
+            "Last Resort",                                                  // Last Resort
+        },
+        {// Macintosh
+            "Roman", "Japanese", "Chinese(Traditional)",    "Korean",       "Arabic",  "Hebrew",             "Greek", "Russian", "RSymbol",
+            "Devanagari", "Gurmukhi", "Gujarati",           "Oriya",        "Bengali", "Tamil",              "Telugu",   "Kannada", "Malayalam",
+            "Sinhalese", "Burmese", "Khmer",                "Thai",         "Laotian", "Georgian",            "Armenian",   "Chinese(Simplified)", "Tibetan",
+            "Mongolian", "Geez", "Slavic",                  "Vietnamese",   "Sindhi", "(Uninterpreted)",
+        },
+        {// Reserved
+            "",
+        },
+        {// Microsoft
+          "Symbol",                     // A format 4 subtable would be used, typically with up to 224 graphic characters assigned at code positions beginning with 0xF020.
+          "Unicode BMP-only (UCS-2)",   // Fonts that support only Unicode BMP characters (U+0000 to U+FFFF) on the Windows platform must use encoding 1 with a format 4 subtable.
+          "Shift-JIS",
+          "Shift-PRC",
+          "BigFive",
+          "Johab",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Unicode UCS-4"               // Fonts that support Unicode supplementary-plane characters (U+10000 to U+10FFFF) with Format 12 subtable.",    // Unicode full repertoire
+        },
+    };
+    const char* ptrLine_1 = "        -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------";
+    const char* ptrLine_2 = "        -----------------------------------------------------------------------------------                           -----------------------------------------------------------------------------------";
+
+    fprintf(stdout, "\n Debug(CMap Format 4)....................................................................................................................................................................................\n");
+    fprintf(stdout, "   True Type Font File                             : %s\n", pTrueTypeFontFile);
+    fprintf(stdout, "   Platform Identifier                             : %u (%s)\n", pPlatformID, asPlatform[pPlatformID]);
+    fprintf(stdout, "   Platform Specific Identifier                    : %u (%s)\n", pPlatformSpecificID, asPlatformSpecific[pPlatformID][pPlatformSpecificID]);
+    fprintf(stdout, "   Format                                          : %u\n", pCmapFormat.format);           // Subtable format; set to 4.
+    fprintf(stdout, "   Length of the subtable                          : %u bytes\n", pCmapFormat.length);     // This is the length in bytes of the subtable.
+    fprintf(stdout, "   segCountX2 (2 * segCount)                       : %u\n", pCmapFormat.segCountX2);       // 2 × segCount.
+    fprintf(stdout, "   searchRange (2 * ((2**floor(log2(segCount))))   : %u\n", pCmapFormat.searchRange);      // Maximum power of 2 less than or equal to segCount, times 2. i.e. ((2**floor(log2(segCount))) * 2, where “**” is an exponentiation operator)
+    fprintf(stdout, "   entrySelector (floor(log2(segCount)))           : %u\n", pCmapFormat.entrySelector);    // Log2 of the maximum power of 2 less than or equal to numTables (log2(searchRange/2), which is equal to floor(log2(segCount)))
+    fprintf(stdout, "   rangeShift  ((segCount * 2) - searchRange)      : %u\n", pCmapFormat.entrySelector);    // segCount times 2, minus searchRange ((segCount * 2) - searchRange)
+
+    fprintf(stdout, "%s\n", ptrLine_1);
+    fprintf(stdout, "        ....Start Code....           .....End Code.....         Identifier       Identifier                           ....Start Code....           .....End Code.....         Identifier       Identifier\n");
+    fprintf(stdout, "        Decimal    Unicode           Decimal    Unicode              Delta      RangeOffset                           Decimal    Unicode           Decimal    Unicode              Delta      RangeOffset\n");
+    fprintf(stdout, "%s\n", ptrLine_2);
+
+    const uint16_t segmentLHS = pSegmentCount / 2 + (pSegmentCount % 2);    // Segments at left hand side.
+    const uint16_t segmentRHS = pSegmentCount / 2;                          // Segments at right hand side.
+    for (uint16_t ii=0, jj=0; ii < segmentLHS; ii++, jj++) {
+        fprintf(stdout, "  %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5u %*c%5u",
+            ii + 1,
+            pSegArray.startCode[ii],                    // Starting character code for each segment.
+            6, cSP, pSegArray.startCode[ii],            // Unicode Point.
+            10, cSP, pSegArray.endCode[ii],             // Ending character code for each segment, last = 0xFFFF.
+            6, cSP, pSegArray.endCode[ii],              // Unicode Point.
+            13, cSP, pSegArray.idDelta[ii],             // Delta for all character codes in segment.
+            11, cSP, pSegArray.idRangeOffset[ii]        // Offset in bytes to glyph indexArray, or 0.
+         );
+        if (jj < segmentRHS) {
+            uint16_t kk = segmentLHS + jj;
+            fprintf(stdout, "%*c %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5u %*c%5u\n",
+                20, cSP,
+                kk + 1,
+                pSegArray.startCode[kk],                    // Starting character code for each segment.
+                6, cSP, pSegArray.startCode[kk],            // Unicode Point.
+                10, cSP, pSegArray.endCode[kk],             // Ending character code for each segment, last = 0xFFFF.
+                6, cSP, pSegArray.endCode[kk],              // Unicode Point.
+                13, cSP, pSegArray.idDelta[kk],             // Delta for all character codes in segment.
+                11, cSP, pSegArray.idRangeOffset[kk]        // Offset in bytes to glyph indexArray, or 0.
+            );
+        }
+        else fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "%s\n", ptrLine_1);
+    fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
+}
+void debugCMapSegmeentArrayFormat_12(const STTFCmapTable_Format_12 pCmapFormat, const STTFCmapTable_SequentialMapGroup_Record *pGroupRecord, const uint16_t pPlatformID, const uint16_t pPlatformSpecificID, const char* pTrueTypeFontFile)
+{
+    static const char* asPlatform[] = {
+        "Unicode", "Macintosh", "Reserved", "Microsoft"
+    };
+    // BMP characters have these characteristics: Their code point values are between 0 and 65535 (or U+0000 and U+FFFF ). 
+    // They can be encoded in a variable-length encoding using 8, 16, or 24 bits (1 to 3 bytes). 
+    // They can be encoded in a fixed-length encoding using 16 bits (2 bytes).
+    static const char* asPlatformSpecific[4][33] = {
+        {// Unicode
+            "Version 1.0 semantics",                                        // Version 1.0 Semantics
+            "Version 1.1 semantics",                                        // Version 1.1 Semantics
+            "ISO 10646 1993 semantics (deprecated)",                        // ISO-10646 1993 Semantics
+            "Unicode 2.0 or later semantics (BMP only)",                    // Unicode semantics(BMP only). BMP=Basic Multilingual Plane 
+            "Unicode 2.0 or later semantics (non-BMP characters allowed)",  // Unicode semantics(non-BMP allowed)
+            "Unicode Variation Sequences",                                  // Unicode Variation Sequences
+            "Last Resort",                                                  // Last Resort
+        },
+        {// Macintosh
+            "Roman", "Japanese", "Chinese(Traditional)",    "Korean",       "Arabic",  "Hebrew",             "Greek", "Russian", "RSymbol",
+            "Devanagari", "Gurmukhi", "Gujarati",           "Oriya",        "Bengali", "Tamil",              "Telugu",   "Kannada", "Malayalam",
+            "Sinhalese", "Burmese", "Khmer",                "Thai",         "Laotian", "Georgian",            "Armenian",   "Chinese(Simplified)", "Tibetan",
+            "Mongolian", "Geez", "Slavic",                  "Vietnamese",   "Sindhi", "(Uninterpreted)",
+        },
+        {// Reserved
+            "",
+        },
+        {// Microsoft
+          "Symbol",                     // A format 4 subtable would be used, typically with up to 224 graphic characters assigned at code positions beginning with 0xF020.
+          "Unicode BMP-only (UCS-2)",   // Fonts that support only Unicode BMP characters (U+0000 to U+FFFF) on the Windows platform must use encoding 1 with a format 4 subtable.
+          "Shift-JIS",
+          "Shift-PRC",
+          "BigFive",
+          "Johab",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Reserved",
+          "Unicode UCS-4"               // Fonts that support Unicode supplementary-plane characters (U+10000 to U+10FFFF) with Format 12 subtable.",    // Unicode full repertoire
+        },
+    };
+    const char* ptrLine_1 = "        -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------";
+    const char* ptrLine_2 = "        ---------------------------------------------------------------                 ---------------------------------------------------------------                 ---------------------------------------------------------------";
+    fprintf(stdout, "\n Debug(CMap Format 12).................................................................................................................................................................................................................\n");
+    fprintf(stdout, "   True Type Font File                             : %s\n", pTrueTypeFontFile);
+    fprintf(stdout, "   Platform Identifier                             : %u (%s)\n", pPlatformID, asPlatform[pPlatformID]);
+    fprintf(stdout, "   Platform Specific Identifier                    : %u (%s)\n", pPlatformSpecificID, asPlatformSpecific[pPlatformID][pPlatformSpecificID]);
+    fprintf(stdout, "   Format                                          : %u\n", pCmapFormat.format);           // Subtable format; set to 4.
+    fprintf(stdout, "   Length of the subtable                          : %u bytes\n", pCmapFormat.length);     // This is the length in bytes of the subtable.
+    fprintf(stdout, "   Number of Groups                                : %u\n", pCmapFormat.numGroups);        // segCount times 2, minus searchRange ((segCount * 2) - searchRange)
+    fprintf(stdout, "%s\n", ptrLine_1);
+    fprintf(stdout, "        .....Start Code.....      ......End Code......       Identifier                 .....Start Code.....      ......End Code......       Identifier                 .....Start Code.....      ......End Code......       Identifier\n");
+    fprintf(stdout, "        Decimal      Unicode      Decimal      Unicode      Start Glyph                 Decimal      Unicode      Decimal      Unicode      Start Glyph                 Decimal      Unicode      Decimal      Unicode      Start Glyph\n");
+    fprintf(stdout, "%s\n", ptrLine_2);
+    const short remainder = pCmapFormat.numGroups % 3;                          // modulus of 3.
+    const short dividend = pCmapFormat.numGroups / 3;                           // modulus of 3.
+    const uint16_t groupLHS = dividend + (remainder == 1 || remainder == 2);    // Group at left hand side.
+    const uint16_t groupMid = dividend + (remainder == 2);                      // Group at middle.
+    const uint16_t segmentRHS = dividend;                                       // Group at right hand side.
+    for (uint32_t ii=0, jj=0, kk=0; ii < groupLHS; ii++, jj++, kk++) {
+        fprintf(stdout, "  %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu",
+            ii + 1,
+            pGroupRecord[ii].startCharCode,                     // Starting character code for each segment.
+            4, cSP, pGroupRecord[ii].startCharCode,             // Unicode Point.
+            5, cSP, pGroupRecord[ii].endCharCode,               // Ending character code for each segment, last = 0xFFFF.
+            4, cSP, pGroupRecord[ii].endCharCode,               // Unicode Point.
+            9, cSP, pGroupRecord[ii].startGlyphID               // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+         );
+        if (jj < groupMid) {
+            uint16_t mm = groupLHS + jj;
+            fprintf(stdout, "%*c %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu",
+                10, cSP,
+                mm + 1,
+                pGroupRecord[mm].startCharCode,                     // Starting character code for each segment.
+                4, cSP, pGroupRecord[mm].startCharCode,             // Unicode Point.
+                5, cSP, pGroupRecord[mm].endCharCode,               // Ending character code for each segment, last = 0xFFFF.
+                4, cSP, pGroupRecord[mm].endCharCode,               // Unicode Point.
+                9, cSP, pGroupRecord[mm].startGlyphID               // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+            );
+        }
+        if (kk < segmentRHS) {
+            uint16_t nn = groupLHS + groupMid + kk;
+            fprintf(stdout, "%*c %3d)  %-7lu %*cU+%06lX %*c%-7lu %*cU+%06lX %*c%7lu\n",
+                10, cSP,
+                nn + 1,
+                pGroupRecord[nn].startCharCode,                     // Starting character code for each segment.
+                4, cSP, pGroupRecord[nn].startCharCode,             // Unicode Point.
+                5, cSP, pGroupRecord[nn].endCharCode,               // Ending character code for each segment, last = 0xFFFF.
+                4, cSP, pGroupRecord[nn].endCharCode,               // Unicode Point.
+                9, cSP, pGroupRecord[nn].startGlyphID               // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+            );
+        }
+        else fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "%s\n", ptrLine_1);
     fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
 }
 short getTable(const STTFTableDirectory * pListOfTables, const uint16_t pTotalDir, const char *pSearchTag)
@@ -579,17 +867,20 @@ int main(int argc, char* argv[])
 
 #if _MSC_VER			// Visual Studio
     if (fopen_s(&fttf, strTrueTypeFontFile, sFileMode)) {
+        printf("File name: %s\n", strTrueTypeFontFile);
         perror("The following error occurred");return (1);
     }
     else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (fopen_s(&fcid, t42Filenamet, "w")) {
+        printf("File name: %s\n", t42Filenamet);
         perror("The following error occurred");
         return (1);
     }
     else printf("File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (fopen_s(&fps, psFilename, "w")) {
+        printf("File name: %s\n", psFilename);
         perror("The following error occurred");
         return (1);
     }
@@ -597,18 +888,21 @@ int main(int argc, char* argv[])
 
 #elif __GNUC__	|| __CYGWIN__		// gcc
     if (!(fttf = fopen(strTrueTypeFontFile, sFileMode))) {
-	  perror("The following error occurred");
+        printf("File name: %s\n", strTrueTypeFontFile);
+        perror("The following error occurred");
 	  return (1);
     }
     else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (!(fcid = fopen(t42Filenamet, "w"))) {
+        printf("File name: %s\n", t42Filenamet);
         perror("The following error occurred");
         return (1);
     }
     else printf("File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (!(fps = fopen(psFilename, "w"))) {
+        printf("File name: %s\n", psFilename);
         perror("The following error occurred");
         return (1);
     }
@@ -647,6 +941,8 @@ int main(int argc, char* argv[])
         listOfTables[ii].offset = SWAPLONG(listOfTables[ii].offset);        // Offset from beginning of file
         listOfTables[ii].length = SWAPLONG(listOfTables[ii].length);        // length of the table in bytes
     }
+
+
     // Name Table
     const short idxNameTable = getTable(listOfTables, numOfTables, "name");        // collect index corresponding to 'name' table.   
     if (idxNameTable == -1) {
@@ -719,7 +1015,7 @@ int main(int argc, char* argv[])
         nameList[ii][listOfNameRecords[ii].length/2] = 0;         // terminate with NULL.
         //printf("%2d) seekOffset=%d length=%d %s.........\n", ii, seekOffset, listOfNameRecords[ii].length, nameList[ii]);
     }
-    
+
     // Head table
     const short idxHeadTable = getTable(listOfTables, numOfTables, "head");       // collect index corresponding to 'head' table.
     if (idxHeadTable == -1) {
@@ -810,6 +1106,163 @@ int main(int argc, char* argv[])
     hheaTable.numOfLongHorMetrics = SWAPWORD(hheaTable.numOfLongHorMetrics);    // Number of hMetric entries in 'hmtx' table
 
 
+    // Cmap Table
+    const short idxCmapTable = getTable(listOfTables, numOfTables, "cmap");        // collect index corresponding to 'cmap' table.   
+    if (idxCmapTable == -1) {
+        fprintf(stdout, " main(): The 'cmap' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    if (fseek(fttf, listOfTables[idxCmapTable].offset, SEEK_SET)) {
+        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxCmapTable].offset); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    STTFCMapTable_Header cmapTable;
+    fread(&cmapTable, sizeof(STTFCMapTable_Header), 1, fttf);
+    if (errno) {
+        fprintf(stdout, " main(): File error while reading object STTFCMapTable_Header. Error(%d)\n", errno); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    cmapTable.version = SWAPWORD(cmapTable.version);                // Table version number (0).
+    cmapTable.numTables = SWAPWORD(cmapTable.numTables);            // Number of encoding tables that follow. Note that only one of these encoding subtables is used at a time.
+    const uint16_t cmapEncodingRecord = cmapTable.numTables;      // Total number cmap encoding records.
+
+    STTFCmapTable_Encoding* cmapSubTableList = new STTFCmapTable_Encoding[cmapEncodingRecord];
+    if (!cmapSubTableList) {
+        fprintf(stdout, " main(): Memory Allocation error of Cmap. Total Encoding SubTables: %d.\n", cmapEncodingRecord); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    for (short ii = 0; ii < cmapEncodingRecord; ii++) {
+        fread(cmapSubTableList+ii, sizeof(STTFCmapTable_Encoding), 1, fttf);
+        if (errno) {
+            fprintf(stdout, " main(): File error while reading object cmapSubTableList (%d/%d). Error(%d)\n", ii, cmapEncodingRecord, errno); // error
+            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+        }
+        cmapSubTableList[ii].platformID = SWAPWORD(cmapSubTableList[ii].platformID);                    // Platform identifier. 0=Unicode, 1=Macintosh, 2=reserved and 3=Microsoft
+        cmapSubTableList[ii].platformSpecificID = SWAPWORD(cmapSubTableList[ii].platformSpecificID);    // Platform-specific encoding ID.
+        cmapSubTableList[ii].offset = SWAPLONG(cmapSubTableList[ii].offset);                            // Byte offset from beginning of table to the subtable for this encoding.
+    }
+
+    STTFCmapTable_Format_4 cmapFormat_4;
+    STTFCmapTable_Format_12 cmapFormat_12;
+    STTFCmapTable_Format_4_Segment_Array segArray = {NULL, 0, NULL, NULL, NULL};
+    STTFCmapTable_SequentialMapGroup_Record *groupRecord=NULL;
+    uint16_t segcount;
+    for (short ii = 0; ii < cmapEncodingRecord; ii++) {
+        if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
+            (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
+        {
+            if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
+            uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
+            if (fseek(fttf, seekOffset, SEEK_SET)) {
+                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            fread(&cmapFormat_4, sizeof(STTFCmapTable_Format_4), 1, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object STTFCmapTable_Format_4. Error(%d)\n", errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            }
+            cmapFormat_4.format = SWAPWORD(cmapFormat_4.format);                    // Subtable format; set to 4.
+            cmapFormat_4.length = SWAPWORD(cmapFormat_4.length);                    // This is the length in bytes of the subtable.
+            cmapFormat_4.language = SWAPWORD(cmapFormat_4.language);                // For requirements on use of the language field.
+            cmapFormat_4.segCountX2 = SWAPWORD(cmapFormat_4.segCountX2);            // 2 × segCount.
+            cmapFormat_4.searchRange = SWAPWORD(cmapFormat_4.searchRange);          // Maximum power of 2 less than or equal to segCount, times 2. i.e. ((2**floor(log2(segCount))) * 2, where “**” is an exponentiation operator)
+            cmapFormat_4.entrySelector = SWAPWORD(cmapFormat_4.entrySelector);      // Log2 of the maximum power of 2 less than or equal to numTables (log2(searchRange/2), which is equal to floor(log2(segCount)))
+            cmapFormat_4.rangeShift = SWAPWORD(cmapFormat_4.rangeShift);            // segCount times 2, minus searchRange ((segCount * 2) - searchRange)
+            segcount = cmapFormat_4.segCountX2 / 2;                                 // segment count;
+            segArray.endCode = new uint16_t[segcount];
+            if (!segArray.endCode) {
+                fprintf(stdout, " main(): Memory Allocation error of Cmap::endCode: segcount: %d.\n", segcount); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            segArray.startCode = new uint16_t[segcount];
+            if (!segArray.startCode) {
+                fprintf(stdout, " main(): Memory Allocation error of Cmap::startCode: segcount: %d.\n", segcount); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            segArray.idDelta = new uint16_t[segcount];
+            if (!segArray.idDelta) {
+                fprintf(stdout, " main(): Memory Allocation error of Cmap::idDelta: segcount: %d.\n", segcount); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            segArray.idRangeOffset = new uint16_t[segcount];
+            if (!segArray.idRangeOffset) {
+                fprintf(stdout, " main(): Memory Allocation error of Cmap::idRangeOffset: segcount: %d.\n", segcount); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            // Segment Array endcode
+            fread(segArray.endCode, sizeof(uint16_t), segcount, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object Segment Array endCode. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            // Segment Array reservedPad
+            fread(&segArray.reservedPad, sizeof(uint16_t), 1, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object Segment Array reservedPad. Error(%d)\n", errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            // Segment Array startCode
+            fread(segArray.startCode, sizeof(uint16_t), segcount, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object Segment Array startCode. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            // Segment Array idDelta
+            fread(segArray.idDelta, sizeof(uint16_t), segcount, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object Segment Array idDelta. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            // Segment Array idRangeOffset
+            fread(segArray.idRangeOffset, sizeof(uint16_t), segcount, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object Segment Array idRangeOffset. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            for (uint16_t jj = 0; jj < segcount; jj++) {
+                segArray.endCode[jj] = SWAPWORD(segArray.endCode[jj]);              // convert from beg Endian to little Endian
+                segArray.startCode[jj] = SWAPWORD(segArray.startCode[jj]);          // convert from beg Endian to little Endian
+                segArray.idDelta[jj] = SWAPWORD(segArray.idDelta[jj]);              // convert from beg Endian to little Endian
+                segArray.idRangeOffset[jj] = SWAPWORD(segArray.idRangeOffset[jj]);  // convert from beg Endian to little Endian
+            }
+        }
+        else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
+                (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
+            if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_12 structure. 
+            uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
+            if (fseek(fttf, seekOffset, SEEK_SET)) {
+                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            fread(&cmapFormat_12, sizeof(STTFCmapTable_Format_12), 1, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object STTFCmapTable_Format_12. Error(%d)\n", errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            }
+            cmapFormat_12.format = SWAPWORD(cmapFormat_12.format);              // Subtable format; set to 12.
+            cmapFormat_12.reserved = SWAPWORD(cmapFormat_12.reserved);          // Reserved; set to 0.
+            cmapFormat_12.length = SWAPLONG(cmapFormat_12.length);              // Byte length of this subtable (including the header).
+            cmapFormat_12.language = SWAPLONG(cmapFormat_12.language);          // For requirements on use of the language field.
+            cmapFormat_12.numGroups = SWAPLONG(cmapFormat_12.numGroups);        // Number of groupings which follow.
+            groupRecord = new STTFCmapTable_SequentialMapGroup_Record[cmapFormat_12.numGroups];
+            if (!groupRecord) {
+                fprintf(stdout, " main(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", cmapFormat_12.numGroups); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            }
+            fread(groupRecord, sizeof(STTFCmapTable_SequentialMapGroup_Record), cmapFormat_12.numGroups, fttf);
+            if (errno) {
+                fprintf(stdout, " main(): File error while reading object STTFCmapTable_SequentialMapGroup_Record. numGroups:%d, Error(%d)\n", cmapFormat_12.numGroups, errno); // error
+                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            }
+            for (uint32_t jj = 0; jj < cmapFormat_12.numGroups; jj++) {
+                groupRecord[jj].startCharCode = SWAPLONG(groupRecord[jj].startCharCode);    // First character code in this group.
+                groupRecord[jj].endCharCode = SWAPLONG(groupRecord[jj].endCharCode);        // Last character code in this group.
+                groupRecord[jj].startGlyphID = SWAPLONG(groupRecord[jj].startGlyphID);      // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+            }
+        }
+        else continue;
+    }
 
     // Maxp table
     const short idxMaxpTable = getTable(listOfTables, numOfTables, "maxp");     // collect index corresponding to 'maxp' table.
@@ -1200,6 +1653,21 @@ int main(int argc, char* argv[])
         //debugString();
         debugSubTables(ttfSubTable, strTrueTypeFontFile);                                                   // debug Sub table
         debugListOfTables(listOfTables, numOfTables, numOfGlyphs, strPSFontName, strTrueTypeFontFile);      // Debug List of Tables
+        debugListOfCMapEncodingRecords(cmapSubTableList, cmapEncodingRecord, strTrueTypeFontFile);        // Debug List of Cmap Encoding Subtables.
+        for (short ii = 0; ii < cmapEncodingRecord; ii++) {
+            if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
+                (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
+            {
+                if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
+                debugCMapSegmeentArrayFormat_4(cmapFormat_4, segArray, segcount, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
+            }
+            else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
+                (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
+                if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_12 structure. 
+                debugCMapSegmeentArrayFormat_12(cmapFormat_12, groupRecord, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
+            }
+            else continue;
+        }
         debugListOfNameRecords(listOfNameRecords, nameList, cntNameRecord, strTrueTypeFontFile);            // Debug List of Name Records.
     }
 
@@ -1211,6 +1679,12 @@ int main(int argc, char* argv[])
         }
         delete[]nameList;				                                    // release allocated memory for 'name' list.
     }
+    if (cmapSubTableList) delete[]cmapSubTableList;                         // release memeory allocated for Encoding subtables.
+    if (groupRecord) delete[]groupRecord;                                   // release memeory allocated for 'cmap' format 12 SequentialMapGroup_Record
+    if (segArray.endCode) delete[]segArray.endCode;                         // release memeory allocated for 'cmap' format 4 Segment Array endCode.
+    if (segArray.startCode) delete[]segArray.startCode;                     // release memeory allocated for 'cmap' format 4 Segment Array startCode.
+    if (segArray.idDelta) delete[]segArray.idDelta;                         // release memeory allocated for 'cmap' format 4 Segment Array idDelta.
+    if (segArray.idRangeOffset) delete[]segArray.idRangeOffset;             // release memeory allocated for 'cmap' format 4 Segment Array idRangeOffset.
     if (listOfTableHmtx_LSBearings) delete[]listOfTableHmtx_LSBearings;     // release allocated memory LeftSideBearings of 'hmtx' table.
     if (listOfTableHmtx_Hmetrix) delete[]listOfTableHmtx_Hmetrix;           // release allocated memory for HMetrix of 'hmtx' table.
     if (listOfLocaOffsets_short) delete[]listOfLocaOffsets_short;           // release allocated memory for 'loca' table short offset.
@@ -1218,12 +1692,14 @@ int main(int argc, char* argv[])
     if (listOfPrep) delete[]listOfPrep;                                     // release allocated memory for 'prep' table.
     if (listOfFpgm) delete[]listOfFpgm;                                     // release allocated memory for 'fpgm' table.
     if (listOfCvt) delete[]listOfCvt;                                       // release allocated memory for 'cvt' table.
+
+    // completed successfully
     printf("\nConversion has been successfully completed and the following two files have been generated.\n");
-    printf("  1. %s is the connverted file corresponding to the TrueType font file %s.\n", t42Filenamet, strTrueTypeFontFile);
+    printf("  1. %s is the converted file corresponding to the TrueType font %s.\n", t42Filenamet, strTrueTypeFontFile);
 #if _MSC_VER			// Visual Studio
-    printf("  2. %s is a postscript program file executable either through gswin64c.exe (ghostscript) or through gsview.exe.\n", psFilename);
+    printf("  2. %s is a postscript program file executable either through Ghostscript (gswin64c.exe) or through GSView (gsview64.exe).\n", psFilename);
 #elif __GNUC__	|| __CYGWIN__		// gcc
-    printf("  2. %s is a postscript program file executable either through gs (ghostscript) or through gsview.\n", psFilename);
+    printf("  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
 #endif
     printf("     This postscript program displays Glyphs present in the character set along with the corresponding CIDs.\n");
     printf("     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
