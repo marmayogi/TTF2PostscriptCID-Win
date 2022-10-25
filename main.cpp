@@ -800,7 +800,18 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
     }
     delete []aFound;                                 // release allocated memory.
 }
-bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdisplay)
+void constrcutCIDMapDictionary(FILE *fcid, const STTFCmapTable_Format_12 pCmapFormat, const STTFCmapTable_SequentialMapGroup_Record* pGroupRecord, const short pTotalGlyps)
+{
+    fprintf(fcid, "CIDMap begin\n");                                    // moves dictionary CIDmap to the dictionary stack
+    for (uint32_t ii = 0; ii < pCmapFormat.numGroups; ii++) {
+        for (uint32_t jj= pGroupRecord[ii].startCharCode, kk=0; jj < pGroupRecord[ii].endCharCode; jj++, kk++) {
+            uint32_t val = pGroupRecord[ii].endCharCode + kk;           // value of dictionary's key-value pair.
+            fprintf(fcid, "   %5u %-5d def\n", jj, val);                // jj is key and val is value of dictionary's key-value pair.
+        }
+    }
+    fprintf(fcid, "end\n");                                             // removes the topmost dictionary CIDMap from the dictionary stack
+}
+bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isunicode, bool* isdisplay)
 {
     //
     // This function assists in processing command line arguments.
@@ -812,24 +823,39 @@ bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdis
     // 4. isdisplay is the output parameter that decides to display reports or not.
     //
 
-    if (argc == 1) return false;                    // display usage
+    if (argc == 1) return false;                                    // display usage
     if (argc < 3) {
         if (argv[1][0] == '-') {
-            return false;                                   // display usage
+            return false;                                           // display usage
         }
         else {
-            pArgId = 1;                return true;        // argv[1] is filename
+            pArgId = 1;                return true;                 // argv[1] is filename
         }
     }
-    if (argc < 4) {
+    if (argc < 5) {
         if (argv[1][0] == '-') {
-            if (argv[1][1] == 'd') *isdisplay = true;
-            else return false;                              // display usage
-            if (argv[2]) {
-                pArgId = 2;             return true;        // argv[2] is filename
+            if (argv[1][1] == 'u') *isunicode = true;
+            else if (argv[1][1] == 'd') *isdisplay = true;
+            else return false;                                      // display usage
+            if (argv[2] && argv[2][0] != '-') {
+                pArgId = 2;             return true;                // argv[2] is filename
             }
         }
-        else return false;                                  // display usage
+        if (argv[2][0] == '-') {
+            if (argv[2][1] == 'u') {
+                if (*isunicode) return false;                       // display usage
+                *isunicode = true;
+            }
+            else if (argv[2][1] == 'd') {
+                if (*isdisplay) return false;                       // display usage
+                *isdisplay = true;
+            }
+            else return false;                                      // display usage
+            if (argv[3] && argv[3][0] != '-') {
+                pArgId = 3;             return true;                // argv[3] is filename
+            }
+        }
+        else return false;                                          // display usage
     }
     return pArgId > 0;                 // if pArgId is zero, then filename is missing and display usage message.
 }
@@ -840,9 +866,15 @@ int main(int argc, char* argv[])
     //		-d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
     //
     bool isdisplay = false;                     // Initialize with false
+    bool isunicode = false;                     // Initialize with false
     short argIdx = 0;                           // This will indicate the argument id (1 or 2) having filename.
-    if (argc < 2 || argc > 4|| !processCommandLine(argc, argv, argIdx, &isdisplay)) {
-        fprintf(stdout, "usage: main -d filename.ttf");
+    if (argc < 2 || argc > 5|| !processCommandLine(argc, argv, argIdx, &isunicode, &isdisplay)) {
+#if _MSC_VER			// Visual Studio
+        fprintf(stdout, "usage: ttf2postscriptcid  -u -d filename.ttf");
+#elif __GNUC__	|| __CYGWIN__		// gcc
+        fprintf(stdout, "usage: ./ttf2postscriptcid  -u -d filename.ttf");
+#endif
+        fprintf(stdout, "       -u unicode Support.\n");
         fprintf(stdout, "       -d display reports.\n");
         printf("\nhit any key....");	getchar();
         return(1);				// exit with error 1
@@ -909,7 +941,6 @@ int main(int argc, char* argv[])
     else printf("File %s is opened for writing\n", psFilename);
 
 #endif
-
     // Offset Sub table 
     STTFOffsetSubTable ttfSubTable;
     fread(&ttfSubTable, sizeof(STTFOffsetSubTable), 1, fttf);
@@ -1599,12 +1630,17 @@ int main(int argc, char* argv[])
     fprintf(fcid, "   end readonly def\n");                         // CIDSystemInfo dictionary is readonly.
     fprintf(fcid, "   /GDBytes %d def\n", numOfGlyphs > 255 ? 2:1); // The length in bytes of the TrueType glyph index in the CIDMap table. If the length is greater than 1, the bytes comprising a glyph index are interpreted high-order byte first. In most cases GDBytes will be 2,allowing glyph indices in the range 0 to 65,535.
     fprintf(fcid, "   /CIDCount %d def\n", numOfGlyphs);            // The number of valid CIDs in the CIDFont. Valid CIDs range from 0 to (CIDCount - 1); CIDs outside this range are treated as undefined glyphs.
-    fprintf(fcid, "   /CIDMap %d string\n", 2 * numOfGlyphs);       // A table containing the glyph index for each CID. The table must be 'CIDCount * GDBytes' long. It may be represented as a single string or as an array of strings in which each element is a multiple of GDBytes long.
-    fprintf(fcid, "      0 1 %d {\n", numOfGlyphs - 1);                         // Iterate total glyphs times for loop to fill CID values from 0 to (numOfGlyphs-1) in the CMap string. Note that CIDmap can be implemented as a dictionary or an array or a string or an integer.
-    fprintf(fcid, "         2 copy dup 2 mul exch -8 bitshift put\n");          // Store low order byte of cid whose value is between 0 and numOfGlyphs-1.
-    fprintf(fcid, "         1 index exch dup 2 mul 1 add exch 255 and put\n");  // Store high order byte of cid whose value is between 0 and numOfGlyphs-1.
-    fprintf(fcid, "      } for\n");                                             // End of for loop.
-    fprintf(fcid, "   def\n");                                                  // CIDMap string has been defined.
+    if (isunicode) {// unicode support.
+        fprintf(fcid, "/CIDMap %u dict def\n", cmapFormat_12.numGroups);      // Construction of CIDMap dictionary with space for numGroups times key-value pairs.
+    }
+    else {// No support for unicode.
+        fprintf(fcid, "   /CIDMap %d string\n", 2 * numOfGlyphs);       // A table containing the glyph index for each CID. The table must be 'CIDCount * GDBytes' long. It may be represented as a single string or as an array of strings in which each element is a multiple of GDBytes long.
+        fprintf(fcid, "      0 1 %d {\n", numOfGlyphs - 1);                         // Iterate total glyphs times for loop to fill CID values from 0 to (numOfGlyphs-1) in the CMap string. Note that CIDmap can be implemented as a dictionary or an array or a string or an integer.
+        fprintf(fcid, "         2 copy dup 2 mul exch -8 bitshift put\n");          // Store low order byte of cid whose value is between 0 and numOfGlyphs-1.
+        fprintf(fcid, "         1 index exch dup 2 mul 1 add exch 255 and put\n");  // Store high order byte of cid whose value is between 0 and numOfGlyphs-1.
+        fprintf(fcid, "      } for\n");                                             // End of for loop.
+        fprintf(fcid, "   def\n");                                                  // CIDMap string has been defined.
+    }
     fprintf(fcid, "   /FontInfo 16 dict dup begin\n");                          // (Optional) A dictionary containing font information that is not accessed by the PostScript interpreter.
     fprintf(fcid, "      /version (%d.%d) readonly def\n", maxpTable.version.whole, maxpTable.version.frac); // Set to 0 if the font is proportionally spaced, non-zero if the font is not proportionally spaced (i.e. monospaced).
     fprintf(fcid, "      /Notice (%s) readonly def\n", strTradeMark);                           // Notice that displays trade mark of the font.
@@ -1632,6 +1668,9 @@ int main(int argc, char* argv[])
     fprintf(fcid, "   end readonly def\n");                                     // The CharStrings dictionary is readonly.
     fprintf(fcid, "   /sfnts [] def\n");                                        // sfnts array with no entries.
     fprintf(fcid, "end def\n");                                                 // The 'cidfont' Dictionary has been defined.
+    if (isunicode) {// unicode support.
+        constrcutCIDMapDictionary(fcid, cmapFormat_12, groupRecord, numOfGlyphs);    // Construction of CIDMap dictionary for numGroups times key-value pairs.
+    }
     fprintf(fcid, "\n%% ---------------------------------------------------------------------------------------------\n");
     fprintf(fcid, "%% Construct sfnts array which is a set of hex strings representing entire ttf file binary data.\n");
     fprintf(fcid, "%% ---------------------------------------------------------------------------------------------\n\n");
