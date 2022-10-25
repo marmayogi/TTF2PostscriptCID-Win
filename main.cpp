@@ -826,7 +826,7 @@ bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdis
             if (argv[1][1] == 'd') *isdisplay = true;
             else return false;                              // display usage
             if (argv[2] && argv[2][0] != '-') {
-                pArgId = 2;             return true;        // argv[2] is filename
+                pArgId = 2;             return true;        // argv[2] is filename849
             }
         }
         else return false;                                  // display usage
@@ -846,7 +846,8 @@ int main(int argc, char* argv[])
         fprintf(stdout, "usage: ttf2postscriptcid.exe -d filename.ttf");
 #elif __GNUC__	|| __CYGWIN__		// gcc
         fprintf(stdout, "usage: ./ttf2postscriptcid -d filename.ttf");
-#endif        fprintf(stdout, "       -d display reports.\n");
+#endif
+        fprintf(stdout, "       -d display reports.\n");
         printf("\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
