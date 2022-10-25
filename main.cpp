@@ -842,8 +842,11 @@ int main(int argc, char* argv[])
     bool isdisplay = false;                     // Initialize with false
     short argIdx = 0;                           // This will indicate the argument id (1 or 2) having filename.
     if (argc < 2 || argc > 4|| !processCommandLine(argc, argv, argIdx, &isdisplay)) {
-        fprintf(stdout, "usage: main -d filename.ttf");
-        fprintf(stdout, "       -d display reports.\n");
+#if _MSC_VER			// Visual Studio
+        fprintf(stdout, "usage: ttf2postscriptcid.exe  -d filename.ttf");
+#elif __GNUC__	|| __CYGWIN__		// gcc
+        fprintf(stdout, "usage: ./ttf2postscriptcid  -d filename.ttf");
+#endif        fprintf(stdout, "       -d display reports.\n");
         printf("\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
