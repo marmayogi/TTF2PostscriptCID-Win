@@ -825,7 +825,7 @@ bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdis
         if (argv[1][0] == '-') {
             if (argv[1][1] == 'd') *isdisplay = true;
             else return false;                              // display usage
-            if (argv[2]) {
+            if (argv[2] && argv[2][0] != '-') {
                 pArgId = 2;             return true;        // argv[2] is filename
             }
         }
