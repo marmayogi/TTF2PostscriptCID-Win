@@ -13,7 +13,7 @@ Adobe supports 3 approaches for conversion of ttf fonts to Type 42 base font.
 3. If TrueType font character set involves more than 255 glyphs, then a TrueType font can be converted into a CIDFont with TrueType outlines. This is called CMap mapping whose FMapType is 9. The CMap resource (maps character code to CIDs) can be constructed so the mapping in CIDMap (CIDs to glyph indices) is reduced to an identity mapping. i.e **Glyph index = CID**. A CIDMap could be either a string or an array of strings or a dictionary. In this software, CIDMap is implemented as a string and these fonts are called as Type 2 CIDfonts with Type 42 as base font. In this  composite font (Type 0), the hierarchy involved is only one level which is the CIDfont itself having the capability of accessing 65535 glyphs! Bear in mind that the Postscript **show** operator will extract two bytes every time.
 
 Since number of glyphs exceed 255, conversion utility should be developed based on either 2nd approach or 3rd approach. The 3rd approach is not only flexible over 2nd approach but also support for unicode is implementable.
-This conversion utility has been developed based on 3rd approach without any unicode support. 
+This conversion utility has been developed based on 3rd approach. 
 
 
 ##### Technical Features
