@@ -92,53 +92,139 @@ void psInitNextPage(FILE* fps, const int pPageOrdinal)
 {
     fprintf(fps, "%sPage: Marmayogi %4d\n", "%%", pPageOrdinal);		// page number is made up of a label and an ordinal number
 }
-void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char *pIndianFontName)
+int cmpfuncGroupRecord(const void* a, const void* b)
 {
-	//
-	// This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
-	// Print Alphabets in 8 X 16 matrix form
-	//
-	// 1. fps is input parameter of type FILE which holds Postscript program instructions.
-	// 2. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
-	//
+    const STTFCmapTable_SequentialMapGroup_Record* first = static_cast<const STTFCmapTable_SequentialMapGroup_Record*>(a);
+    const STTFCmapTable_SequentialMapGroup_Record* second = static_cast<const STTFCmapTable_SequentialMapGroup_Record*>(b);
+    if (first->startGlyphID == second->startGlyphID) return 0;
+    else if (first->startGlyphID < second->startGlyphID) return -1;
+    else return 1;
+}
+
+void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record* pGroupRecord, const short pTotalGroupRecords, const short pTotalGlyphs, const char* pIndianFontName)
+{
+    //
+    // This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
+    // Print Alphabets in 8 X 16 matrix form with unicode details.
+    //
+    // 1. fps is input parameter of type FILE which holds Postscript program instructions.
+    // 2. pGroupRecord is input array of type STTFCmapTable_SequentialMapGroup_Record supplying start and ending unicode along with start glyph identifier.
+    // 3. pTotalGroupRecords is input parameter indicating total group records.
+    // 4. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
+    // 5. pIndianFontName is input parameter which is the font name of t42 cid font file.
+    //
+
+    STTFCmapTable_SequentialMapGroup_Record* grec = NULL;
+    grec = new STTFCmapTable_SequentialMapGroup_Record[pTotalGroupRecords];
+    if (!grec) {
+        fprintf(stdout, " main(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", pTotalGroupRecords); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    const rsize_t size = sizeof(STTFCmapTable_SequentialMapGroup_Record) * pTotalGroupRecords;                                      // size of total records
+    memcpy_s(static_cast<void*>(grec), size, static_cast<const void*>(pGroupRecord), size);                                         // transfer records.
+    qsort(grec, static_cast<size_t>(pTotalGroupRecords), sizeof(STTFCmapTable_SequentialMapGroup_Record), cmpfuncGroupRecord);      // sort group records based on startGlyphID.
+    psInitPostscript(fps, pIndianFontName);                         // Initialize Postscript.
+    const char* pFontName = "myfont";                               // Font to print Glyphs.
+    const char* pTitleFontName = "myHelvetica";                     // Font to print Titles
+    int pagenum = 0;                                                // Initialize page numbers.
+    const short lcResidual = pTotalGlyphs % 128;                    // Glyphs available in the final page.
+    const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);     // Total number pages which will accommodate all the glyphs.
+    uint32_t unicodePoint;                                          // unicode correponding to Glyph
+    uint32_t idxGrp = 0;                                            // index whose range is from 0 to pTotalGroupRecords-1.
+    uint32_t range = 0;                                             // Number of  glyphs having contiguous unicode points.
+    uint32_t startGlyphID;                                          // startGlyphID corresponding to GlyphID indexed by idxGrp. 
+    for (short ii = 0; ii < lcLoop; ii++) {// Total Pages
+        for (short jj = 0, cntGlyphPerPage = 0; jj < 8; jj++) {
+            unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 %d add 760 moveto (%d) show\n", 68 * jj, titlecode);						// print column title
+            fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
+            fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            for (short kk = 0; kk < 16; kk++) {
+                if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout;
+                uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.
+                const short xPos = 68 * jj;															    // X-Coordinate.
+                const short yPos = 43 * kk;																// Y-Coordinate.
+                fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
+                fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
+                fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
+                fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos, yPos, cid);             // print alphabet
+                fprintf(fps, "9 %s\n", pTitleFontName);												    // set font to print character code.
+                fprintf(fps, "50 %d add 725 %d sub moveto (%d) show\n", xPos, yPos+15, cid);            // print cid decimal value
+
+                if (!ii && !jj && !kk) {// print .notdef glyph
+                    fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos+25);           // print none for unicode for .notdef glyph
+                }
+                else {
+                    if (range) {
+
+                    }
+                    else {
+                        range = grec[idxGrp].endCharCode - grec[idxGrp].startCharCode;
+                    }
+                }
+
+                cntGlyphPerPage++;
+            }
+        }
+    Label_Getout:
+        psFlushReport(fps, ++pagenum);
+        if (ii < lcLoop - 1) {
+            psInitNextPage(fps, pagenum + 1);		// setup for next page
+        }
+    }
+    delete[]grec;           // release memeory allocated for 'cmap' format 12 SequentialMapGroup_Record
+}
+void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char* pIndianFontName)
+{
+    //
+    // This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
+    // Print Alphabets in 8 X 16 matrix form
+    //
+    // 1. fps is input parameter of type FILE which holds Postscript program instructions.
+    // 2. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
+    // 3. pIndianFontName is input parameter which is the font name of t42 cid font file.
+    //
     psInitPostscript(fps, pIndianFontName);
     const char* pFontName = "myfont";                   // Font to print Glyphs.
     const char* pTitleFontName = "myHelvetica";         // Font to print Titles
     int pagenum = 0;
-	const short lcResidual = pTotalGlyphs % 128;
-	const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);
-	for (short ii = 0; ii < lcLoop; ii++) {
-		for (short jj = 0, cntGlyph=0; jj < 8; jj++) {
-			unsigned int titlecode = ii * 128 + (jj << 4);
-			fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
-			fprintf(fps, "50 %d add 760 moveto (%d) show\n", 35 * jj, titlecode);						// print column title
-			fprintf(fps, "350 %d add 760 moveto (%d) show\n", 30 * jj, titlecode);						// print column title
-			fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
-			fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 615);									// Vertical line
-			fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
-			fprintf(fps, "50 790 260 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
-			fprintf(fps, "350 790 230 (CID) CTXT\n");													// Write title 'CID' by centering at RHS.
-			for (short kk = 0; kk < 16; kk++) {
-				if (lcResidual && ii == lcLoop - 1 && cntGlyph == lcResidual) goto Label_Getout;
-				uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph.
-				const short xPos_1 = 35 * jj;															// X-Coordinate.
-				const short xPos_2 = 30 * jj;															// X-Coordinate.
-				const short yPos = 40 * kk;																// Y-Coordinate.
-				fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
-				fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
-				fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
+    const short lcResidual = pTotalGlyphs % 128;
+    const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);
+    for (short ii = 0; ii < lcLoop; ii++) {
+        for (short jj = 0, cntGlyph = 0; jj < 8; jj++) {
+            unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 %d add 760 moveto (%d) show\n", 35 * jj, titlecode);						// print column title
+            fprintf(fps, "350 %d add 760 moveto (%d) show\n", 30 * jj, titlecode);						// print column title
+            fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
+            fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 615);									// Vertical line
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 790 260 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            fprintf(fps, "350 790 230 (CID) CTXT\n");													// Write title 'CID' by centering at RHS.
+            for (short kk = 0; kk < 16; kk++) {
+                if (lcResidual && ii == lcLoop - 1 && cntGlyph == lcResidual) goto Label_Getout;
+                uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph.
+                const short xPos_1 = 35 * jj;															// X-Coordinate.
+                const short xPos_2 = 30 * jj;															// X-Coordinate.
+                const short yPos = 40 * kk;																// Y-Coordinate.
+                fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
+                fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
+                fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
                 fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos_1, yPos, cid);           // print alphabets
                 fprintf(fps, "11 %s\n", pTitleFontName);												// set font to print character code.
-				fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
-				cntGlyph++;
-			}
-		}
-		Label_Getout:
-		psFlushReport(fps, ++pagenum);
-		if (ii < lcLoop - 1) {
-			psInitNextPage(fps, pagenum +1);		// setup for next page
-		}
-	}
+                fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
+                cntGlyph++;
+            }
+        }
+    Label_Getout:
+        psFlushReport(fps, ++pagenum);
+        if (ii < lcLoop - 1) {
+            psInitNextPage(fps, pagenum + 1);		// setup for next page
+        }
+    }
 }
 void debugSwap()
 {
@@ -800,7 +886,7 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
     }
     delete []aFound;                                 // release allocated memory.
 }
-bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdisplay)
+bool processCommandLine(const int argc, char* argv[], short& pArgId, bool* isdisplay, bool* isunicode)
 {
     //
     // This function assists in processing command line arguments.
@@ -810,44 +896,77 @@ bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdis
     // 3. filename is ttf filename. This should have ttf extension.
     //    i)   -d is to display Subtable, Directory of Tables, and Name records from 'name' table.
     // 4. isdisplay is the output parameter that decides to display reports or not.
+    // 5. isunicode is the output parameter that decides to include unicode information in the display of glyphs by postscript program (filename.ps).
     //
 
-    if (argc == 1) return false;                    // display usage
+    if (argc == 1) return false;                                    // display usage
     if (argc < 3) {
         if (argv[1][0] == '-') {
-            return false;                                   // display usage
+            return false;                                           // display usage
         }
         else {
-            pArgId = 1;                return true;        // argv[1] is filename
+            pArgId = 1;                return true;                 // argv[1] is filename
         }
     }
     if (argc < 4) {
         if (argv[1][0] == '-') {
-            if (argv[1][1] == 'd') *isdisplay = true;
-            else return false;                              // display usage
+            if (argv[1][1] == 'u' && argv[1][2] == 'd' && argv[1][3] == 0) *isunicode = *isdisplay = true;
+            else if (argv[1][1] == 'd' && argv[1][2] == 'u' && argv[1][3] == 0) *isunicode = *isdisplay = true;
+            else if (argv[1][1] == 'u' && argv[1][2] == 0) *isunicode = true;
+            else if (argv[1][1] == 'd' && argv[1][2] == 0) *isdisplay = true;
+            else return false;                                                    // display usage
             if (argv[2] && argv[2][0] != '-') {
-                pArgId = 2;             return true;        // argv[2] is filename849
+                pArgId = 2;             return true;                              // argv[2] is filename
             }
         }
-        else return false;                                  // display usage
+        else return false;                                          // display usage
+    }
+    if (argc < 5) {
+        if (argv[1][0] == '-') {
+            if (argv[1][1] == 'u' && argv[1][2] == 0) *isunicode = true;
+            else if (argv[1][1] == 'd' && argv[1][2] == 0) *isdisplay = true;
+            else return false;                                                      // display usage
+            if (argv[2] && argv[2][0] != '-') {
+                pArgId = 2;             return true;                                // argv[2] is filename
+            }
+        }
+        if (argv[2][0] == '-') {
+            if (argv[2][1] == 'u' && argv[2][2] == 0) {
+                if (*isunicode) return false;                       // display usage
+                *isunicode = true;
+            }
+            else if (argv[2][1] == 'd' && argv[2][2] == 0) {
+                if (*isdisplay) return false;                       // display usage
+                *isdisplay = true;
+            }
+            else return false;                                      // display usage
+            if (argv[3] && argv[3][0] != '-') {
+                pArgId = 3;             return true;                // argv[3] is filename
+            }
+        }
+        else return false;                                          // display usage
     }
     return pArgId > 0;                 // if pArgId is zero, then filename is missing and display usage message.
 }
 int main(int argc, char* argv[])
 {
     //
-    // main -d filename.ttf
-    //		-d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
+    // ttf2postscriptcid -d -u filename.ttf
+    //		             -d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
+    //		             -u refers to include unicode in the display Glyphs present in the charcater set of ttf font.
     //
     bool isdisplay = false;                     // Initialize with false
+    bool isunicode = false;                     // Initialize with false
     short argIdx = 0;                           // This will indicate the argument id (1 or 2) having filename.
-    if (argc < 2 || argc > 4|| !processCommandLine(argc, argv, argIdx, &isdisplay)) {
+    if (argc < 2 || argc > 5 || !processCommandLine(argc, argv, argIdx, &isdisplay, &isunicode)) {
 #if _MSC_VER			// Visual Studio
-        fprintf(stdout, "usage: ttf2postscriptcid.exe -d filename.ttf");
+        fprintf(stdout, "usage: ttf2postscriptcid -d -u filename.ttf");
 #elif __GNUC__	|| __CYGWIN__		// gcc
-        fprintf(stdout, "usage: ./ttf2postscriptcid -d filename.ttf");
+        fprintf(stdout, "usage: ./ttf2postscriptcid -d -u filename.ttf");
 #endif
         fprintf(stdout, "       -d display reports.\n");
+        fprintf(stdout, "       -u include unicode while displaying Glyphs.\n");
+
         printf("\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
@@ -1649,10 +1768,10 @@ int main(int argc, char* argv[])
     fprintf(fcid, "%% -------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "Mycidfont dup /CIDFontName get exch /CIDFont defineresource\n");  // Register instance of Mycidfont with /CIDFont resource category.
     fprintf(fcid, "/CIDFontName get /Identity-H [2 index] composefont pop\n");       // Type 0 Composite font. Operator composefont creates a Type 0 font with the name CIDFontName. Note that Type 0 fonts with FMapType 9 require a CMap entry in the font dictionary which is /Identity-H.
-    fclose(fttf);                                           // close ttf file handle.
-    fclose(fcid);                                           // close cid file handle.
-    printAlphabet_T42(fps, numOfGlyphs, strPSFontName);     // Print Glyphs along with corresponding CIDs
-    fclose(fps);                                            // close Postscript file handle.
+    fclose(fttf);                                                   // close ttf file handle.
+    fclose(fcid);                                                   // close cid file handle.
+    isunicode ? printAlphabet_T42(fps, groupRecord, cmapFormat_12.numGroups, numOfGlyphs, strPSFontName) : printAlphabet_T42(fps, numOfGlyphs, strPSFontName);
+    fclose(fps);                                                    // close Postscript file handle.
     if (isdisplay) {
         //debugString();
         debugSubTables(ttfSubTable, strTrueTypeFontFile);                                                   // debug Sub table
