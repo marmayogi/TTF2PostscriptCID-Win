@@ -900,6 +900,29 @@ void debugCMapSegmeentArrayFormat_12(const STTFCmapTable_Format_12 pCmapFormat, 
     fprintf(stdout, "%s\n", ptrLine_1);
     fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
 }
+short getNameRecord(const STTFNameRecord* pNameRecordList, const uint16_t pNameRecordCount, const uint16_t pPlatformID, const uint16_t pNameIdentifier)
+{
+    //
+    // This functions returns the record number corresponding to the pPlatformID and pNameIdentifier
+    // 
+    // 1. pNameRecordList is an array of input parameter supplying Name-record details.
+    // 2. pNameRecordCount is an input parameter indicating total number of Name records in the table.
+    // 3. pPlatformID is an input parameter indicating the platform which are 0=unicode, 1=Macintosh, 2=reserved and 3=Microsoft.
+    // 4. pNameIdentifier is an input parameter indicating the identifiers which are 0=Copyright, 1=Family, 2=Subfamily, 3=A unique identifier, 4=Font Full name, 5=Version , 6=PostScript, 7=Trademark  and so on.
+    //
+
+    for (uint16_t ii = 0; ii < pNameRecordCount; ii++) {
+        if (pNameRecordList[ii].platformID == pPlatformID && pNameRecordList[ii].nameID == pNameIdentifier) return ii;
+    }
+    return -1;		// not found.
+}
+short getPlatform(const STTFCmapTable_Encoding* pCmapSubTableList, const uint16_t pNumOfTables, const uint16_t pPlatformID, const uint16_t pPlatformSpecificID)
+{
+    for (uint16_t ii = 0; ii < pNumOfTables; ii++) {
+        if (pCmapSubTableList[ii].platformID == pPlatformID && pCmapSubTableList[ii].platformSpecificID == pPlatformSpecificID) return ii;
+    }
+    return -1;		// not found.
+}
 short getTable(const STTFTableDirectory * pListOfTables, const uint16_t pTotalDir, const char *pSearchTag)
 {
     for (short ii = 0; ii < pTotalDir; ii++) {
@@ -1384,7 +1407,7 @@ int main(int argc, char* argv[])
     }
     cmapTable.version = SWAPWORD(cmapTable.version);                // Table version number (0).
     cmapTable.numTables = SWAPWORD(cmapTable.numTables);            // Number of encoding tables that follow. Note that only one of these encoding subtables is used at a time.
-    const uint16_t cmapEncodingRecord = cmapTable.numTables;      // Total number cmap encoding records.
+    const uint16_t cmapEncodingRecord = cmapTable.numTables;        // Total number cmap encoding records.
 
     STTFCmapTable_Encoding* cmapSubTableList = new STTFCmapTable_Encoding[cmapEncodingRecord];
     if (!cmapSubTableList) {
@@ -1413,7 +1436,7 @@ int main(int argc, char* argv[])
         if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
             (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
         {
-            if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
+            if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 3) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
                 fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u, Error(%d)\n", seekOffset, errno); // error
@@ -1493,7 +1516,7 @@ int main(int argc, char* argv[])
         }
         else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
-            if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_12 structure. 
+            if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 4) == -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
                 fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
@@ -1805,15 +1828,18 @@ int main(int argc, char* argv[])
     }
 
     //printf("NumOfGlyphs=%d numberOfHMetrics = %u cntNameRecord=%d", numOfGlyphs, numberOfHMetrics, cntNameRecord); getchar();
-
+    short arrRecordNum[8] = { 0 };         // record number corresponding to NameID.
+    for (uint16_t ii = 0; ii < 8; ii++) {
+        arrRecordNum [ii] = getNameRecord(listOfNameRecords, cntNameRecord, 3, ii);     // microsoft.
+    }
     const double emUnit = 1000.0 / static_cast<double>(headTable.unitsPerEm);   // The space required in termos of 1000 units for character 'M'.
-    const char* strCopyRight = nameList[0];                                     // code 0 represents copy right.
-    const char* strFontFamily = nameList[1];                                    // code 1 represents font family name.
-    const char* strFontStyle = nameList[2];                                     // code 2 represents font Style.
-    const char* strFontFullName = nameList[4];                                  // code 4 represents font full name.
-    const char *strPSFontName = nameList[6];                                    // code 6 represents name of Postscript font.
-    const char* strTradeMark = cntNameRecord < 8 ? "" : nameList[7];            // code 7 represents Trademark.
-    const char* strFontWeight = getWeight(os2Table.usWeightClass);              // Font Weight Class.
+    const char* strCopyRight = arrRecordNum[0] == -1 ? "" : nameList[arrRecordNum[0]];      // code 0 represents copy right.
+    const char* strFontFamily = arrRecordNum[1] == -1 ? "" : nameList[arrRecordNum[1]];     // code 1 represents font family name.
+    const char* strFontStyle = arrRecordNum[2] == -1 ? "" : nameList[arrRecordNum[2]];      // code 2 represents font Style.
+    const char* strFontFullName = arrRecordNum[4] == -1 ? "" : nameList[arrRecordNum[4]];   // code 4 represents font full name.
+    const char *strPSFontName = arrRecordNum[6] == -1 ? "" : nameList[arrRecordNum[6]];     // code 6 represents name of Postscript font.
+    const char* strTradeMark = arrRecordNum[7] == -1 ? "" : nameList[arrRecordNum[7]];      // code 7 represents Trademark.
+    const char* strFontWeight = getWeight(os2Table.usWeightClass);                          // Font Weight Class.
 
     /**
     printf("panose familykind=%d weight=%d %d\n", os2Table.panose[0], os2Table.panose[2], os2Table.usWeightClass);
@@ -1924,12 +1950,12 @@ int main(int argc, char* argv[])
             if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
             {
-                if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
+                if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 3) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
                 debugCMapSegmeentArrayFormat_4(cmapFormat_4, segArray, segcount, isformat12 ? 0 : derivedGroupRecords, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
             }
             else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
-                if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_12 structure. 
+                if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 4) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
                 debugCMapSegmeentArrayFormat_12(cmapFormat_12, groupRecord, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
             }
             else continue;
