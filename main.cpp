@@ -13,6 +13,13 @@
 #include <errno.h>
 #include "ttf.h"
 
+typedef struct STTFCmapTable_GRecord {  // Each sequential map group record specifies a character range and the starting glyph ID mapped from the first character.
+    uint16_t startCharCode;             // First character code in this group.
+    uint16_t endCharCode;               // Last character code in this group.
+    uint16_t startGlyphID;              // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
+} STTFCmapTable_GRecord;
+
+
 const char cSP = ' ';
 void psInitPostscript(FILE *fps, const char* pIndianFontName)
 {
@@ -92,53 +99,295 @@ void psInitNextPage(FILE* fps, const int pPageOrdinal)
 {
     fprintf(fps, "%sPage: Marmayogi %4d\n", "%%", pPageOrdinal);		// page number is made up of a label and an ordinal number
 }
-void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char *pIndianFontName)
+int cmpfuncGroupRecordFormat12(const void* a, const void* b)
 {
-	//
-	// This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
-	// Print Alphabets in 8 X 16 matrix form
-	//
-	// 1. fps is input parameter of type FILE which holds Postscript program instructions.
-	// 2. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
-	//
+    const STTFCmapTable_SequentialMapGroup_Record* first = static_cast<const STTFCmapTable_SequentialMapGroup_Record*>(a);
+    const STTFCmapTable_SequentialMapGroup_Record* second = static_cast<const STTFCmapTable_SequentialMapGroup_Record*>(b);
+    if (first->startGlyphID == second->startGlyphID) return 0;
+    else if (first->startGlyphID < second->startGlyphID) return -1;
+    else return 1;
+}
+int cmpfuncGroupRecordFormat4(const void* a, const void* b)
+{
+    const STTFCmapTable_GRecord* first = static_cast<const STTFCmapTable_GRecord*>(a);
+    const STTFCmapTable_GRecord* second = static_cast<const STTFCmapTable_GRecord*>(b);
+    if (first->startGlyphID == second->startGlyphID) return 0;
+    else if (first->startGlyphID < second->startGlyphID) return -1;
+    else return 1;
+}
+void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record* pGroupRecord, const short pTotalGroupRecords, const short pTotalGlyphs, const char* pIndianFontName)
+{
+    //
+    // This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
+    // Print Alphabets in 8 X 16 matrix form with unicode details.
+    //
+    // 1. fps is input parameter of type FILE which holds Postscript program instructions.
+    // 2. pGroupRecord is input array of type STTFCmapTable_SequentialMapGroup_Record supplying start and ending unicode along with start glyph identifier.
+    // 3. pTotalGroupRecords is input parameter indicating total group records.
+    // 4. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
+    // 5. pIndianFontName is input parameter which is the font name of t42 cid font file.
+    //
+
+    STTFCmapTable_SequentialMapGroup_Record* grec = NULL;
+    grec = new STTFCmapTable_SequentialMapGroup_Record[pTotalGroupRecords];
+    if (!grec) {
+        fprintf(stdout, " printAlphabet_T42(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", pTotalGroupRecords); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    const size_t size = sizeof(STTFCmapTable_SequentialMapGroup_Record) * pTotalGroupRecords;                                           // size of total records
+    memcpy_s(static_cast<void*>(grec), size, static_cast<const void*>(pGroupRecord), size);                                             // transfer records.
+    qsort(grec, static_cast<size_t>(pTotalGroupRecords), sizeof(STTFCmapTable_SequentialMapGroup_Record), cmpfuncGroupRecordFormat12);  // sort group records based on startGlyphID.
+    psInitPostscript(fps, pIndianFontName);                         // Initialize Postscript.
+    const char* pFontName = "myfont";                               // Font to print Glyphs.
+    const char* pTitleFontName = "myHelvetica";                     // Font to print Titles
+    int pagenum = 0;                                                // Initialize page numbers.
+    const short lcResidual = pTotalGlyphs % 128;                    // Glyphs available in the final page.
+    const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);     // Total number pages which will accommodate all the glyphs.
+    uint32_t unicodePoint;                                          // unicode correponding to Glyph
+    int32_t idxGrp = -1;                                            // index whose range is from 0 to pTotalGroupRecords-1.
+    uint32_t range = 0;                                             // Number of  glyphs having contiguous unicode points.
+    uint32_t startGlyphID;                                          // startGlyphID corresponding to GlyphID indexed by idxGrp. 
+    for (short ii = 0; ii < lcLoop; ii++) {// Total Pages
+        for (short jj = 0, cntGlyphPerPage = 0; jj < 8; jj++) {
+            unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 %d add 760 moveto (%d) show\n", 68 * jj, titlecode);						// print column title
+            fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
+            fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            for (short kk = 0; kk < 16; kk++) {
+                if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout; // All glyphs are printed so getout.
+                uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.
+                const short xPos = 68 * jj;															    // X-Coordinate.
+                const short yPos = 43 * kk;																// Y-Coordinate.
+                fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
+                fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
+                fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
+                fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos, yPos, cid);             // print alphabet
+                fprintf(fps, "9 %s\n", pTitleFontName);												    // set font to print character code.
+                fprintf(fps, "50 %d add 725 %d sub moveto (%d) show\n", xPos, yPos+15, cid);            // print cid decimal value
+
+                if (!ii && !jj && !kk) {// print .notdef glyph
+                    fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos+25);           // as .notdef glyph is not associated with any Unicode so print 'none'. 
+                }
+                else {
+                    if (range) {
+                        ++unicodePoint < 65536 ? fprintf(fps, "50 %d add 725 %d sub moveto (U+%04X) show\n", xPos, yPos + 25, unicodePoint) :     // print unicode point in 4 hex digits.
+                                                 fprintf(fps, "50 %d add 725 %d sub moveto (U+%06X) show\n", xPos, yPos + 25, unicodePoint);      // print unicode point in 6 hex digits.
+                        if (range) range--;     // decrement range. There are still glyphs to printed that falls into contiguous range.
+                    }
+                    else {
+                        ++idxGrp;
+                        startGlyphID = grec[idxGrp].startGlyphID;                                           // Start Glyph Id
+                        if (startGlyphID > cid) {
+                            fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos + 25);     // as glyph is not associated with any Unicode so print 'none'.
+                            --idxGrp;                                                                       // Decrement until startGlyphID equals cid.  
+                        }
+                        else {
+                            range = grec[idxGrp].endCharCode - grec[idxGrp].startCharCode + 1;      // Find out range of contiguous glyphs having Unicode Points.
+                            unicodePoint = grec[idxGrp].startCharCode;
+                            unicodePoint < 65536 ? fprintf(fps, "50 %d add 725 %d sub moveto (U+%04X) show\n", xPos, yPos + 25, unicodePoint) :     // print unicode point in 4 hex digits.
+                                                   fprintf(fps, "50 %d add 725 %d sub moveto (U+%06X) show\n", xPos, yPos + 25, unicodePoint);      // print unicode point in 6 hex digits.
+                            if (range) range--;     // decrement range. There are still glyphs to printed that falls into contiguous range.
+                        }
+                    }
+                }
+                cntGlyphPerPage++;
+            }
+        }
+    Label_Getout:
+        psFlushReport(fps, ++pagenum);
+        if (ii < lcLoop - 1) {
+            psInitNextPage(fps, pagenum + 1);		// setup for next page
+        }
+    }
+    delete[]grec;           // release memeory allocated for 'cmap' format 12 SequentialMapGroup_Record
+}
+void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, const STTFCmapTable_Format_4_Segment_Array pSegArray, const uint16_t pSegCount, const short pTotalGlyphs, uint16_t *pDerivedGroupRecords, const char* pIndianFontName)
+{
+    //
+    // This function displays glyphs with cid and unicode points for format 4.
+    //
+    // 1. fttf is the input file handle for ttf font.
+    // 2. fps is the input file handle for postscript program.
+    // 3. pOffsetIdRangeOffset is an input parameter which is an offset to idRangeOffset for format 4 w.r.t. the beginning of file.
+    // 4. pSegArray is an unput structure containing four parallel arrays describing the segments (one segment for each contiguous range of codes)
+    // 5. pSegCount is an an input parameter indicating the size of each of four four parallel arrays.
+    // 6. pTotalGlyphs is an input parameter indicating total glyphs associated with the font.
+    // 7. pDerivedGroupRecords is an output parameter that passes out derived group records from segment count required to display CID and Unicode Point.
+    // 8. pIndianFontName is input parameter which is the font name of t42 cid font file.
+    //
+
+    uint16_t cntGrpRecords = 0;
+    for (uint16_t ii = 0; ii < pSegCount-1; ii++) {// pSegCount includes final entry 0xffff which should be discarded.
+        cntGrpRecords += (pSegArray.idRangeOffset[ii] ? pSegArray.endCode[ii] - pSegArray.startCode[ii] + 1 : 1);
+    }
+    STTFCmapTable_GRecord* grec = NULL;
+    grec = new STTFCmapTable_GRecord[cntGrpRecords];
+    if (!grec) {
+        fprintf(stdout, " printAlphabet_T42(): Memory Allocation error of Cmap. cntGrpRecords: %d.\n", cntGrpRecords); // error
+        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+    }
+    uint16_t kk = 0;            // Ranges between 0 and cntGrpRecords-1
+    for (uint16_t ii = 0; ii < pSegCount-1; ii++) {
+        if (!pSegArray.idRangeOffset[ii]) {
+            uint16_t glyphid = pSegArray.idDelta[ii] + pSegArray.startCode[ii];     // glyph index = pSegArray.idDelta[ii] + character code.
+            grec[kk].startGlyphID = glyphid;                                        // store glyph index
+            grec[kk].startCharCode = pSegArray.startCode[ii];                       // copy start code.
+            grec[kk].endCharCode = pSegArray.endCode[ii];                           // copy end code.
+            //printf("zero......%3d) delta=%d start=%04x end=%04X glyphid=%u", ii, pSegArray.idDelta[ii], grec[kk].startCharCode, grec[kk].endCharCode, glyphid); getchar();
+            kk++;
+        }
+        else {
+            uint16_t loop = pSegArray.endCode[ii] - pSegArray.startCode[ii] + 1;
+            uint16_t jj = 0;
+            do {
+                uint16_t OffsetInBytes = ii * 2 + pSegArray.idRangeOffset[ii] + 2 * jj;     // (pSegArray.startCode[ii + jj] - pSegArray.startCode[ii]);
+                long glyphIndexAddress = pOffsetIdRangeOffset + OffsetInBytes;
+                if (fseek(fttf, glyphIndexAddress, SEEK_SET)) {
+                    fprintf(stdout, " printAlphabet_T42(): File seek error in 'cmap` table. glyphIndexAddress: %ld, Error(%d)\n", glyphIndexAddress, errno); // error
+                    fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                }
+                uint16_t glyphid;
+                fread(&glyphid, sizeof(uint16_t), 1, fttf);
+                if (errno) {
+                    fprintf(stdout, " printAlphabet_T42(): File error while reading object glyphid. Error(%d)\n", errno); // error
+                    fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                }
+                glyphid = SWAPWORD(glyphid);                                                        // convert to little endian.
+                if (glyphid) glyphid += pSegArray.idDelta[ii];                                      // convert to little endian.
+                grec[kk + jj].startGlyphID = glyphid;                                               // store glyph id.
+                grec[kk + jj].startCharCode = pSegArray.startCode[ii]+jj;                           // start Character Code.
+                grec[kk + jj].endCharCode = pSegArray.startCode[ii] + jj;                           // end  Character Code.
+                //printf("non-zero..%3d) OffsetInBytes=%u start=%04x end=%04X glyphid=%u", jj, OffsetInBytes, grec[kk+jj].startCharCode, grec[kk+jj].endCharCode, glyphid); getchar();
+            } while (++jj < loop);
+            kk += loop;
+        }
+    }
+    //printf("kk=%u cntGrpRecords=%u", kk, cntGrpRecords); getchar();
+    qsort(grec, static_cast<size_t>(cntGrpRecords), sizeof(STTFCmapTable_GRecord), cmpfuncGroupRecordFormat4);      // sort group records based on startGlyphID.
+    //printf("after sort.....start=%04x end=%04X glyphid=%u", grec[0].startCharCode, grec[0].endCharCode, grec[0].startGlyphID); getchar();
+    //for (uint16_t ii = cntGrpRecords - 4; ii < cntGrpRecords; ii++) {printf("start[%u]=%04x end[%u]=%04X glyphid[%u]=%u", ii,grec[ii].startCharCode, ii,grec[ii].endCharCode, ii,grec[ii].startGlyphID); getchar();}
+
+    psInitPostscript(fps, pIndianFontName);                         // Initialize Postscript.
+    const char* pFontName = "myfont";                               // Font to print Glyphs.
+    const char* pTitleFontName = "myHelvetica";                     // Font to print Titles
+    int pagenum = 0;                                                // Initialize page numbers.
+    const short lcResidual = pTotalGlyphs % 128;                    // Glyphs available in the final page.
+    const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);     // Total number pages which will accommodate all the glyphs.
+    uint32_t unicodePoint;                                          // unicode correponding to Glyph
+    int32_t idxGrp = -1;                                            // index whose range is from 0 to cntGrpRecords-1.
+    uint32_t range = 0;                                             // Number of  glyphs having contiguous unicode points.
+    uint32_t startGlyphID;                                          // startGlyphID corresponding to GlyphID indexed by idxGrp. 
+    for (short ii = 0; ii < lcLoop; ii++) {// Total Pages
+        for (short jj = 0, cntGlyphPerPage = 0; jj < 8; jj++) {
+            unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 %d add 760 moveto (%d) show\n", 68 * jj, titlecode);						// print column title
+            fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
+            fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            for (short kk = 0; kk < 16; kk++) {
+                if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout; // All glyphs are printed so getout.
+                uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.
+                const short xPos = 68 * jj;															    // X-Coordinate.
+                const short yPos = 43 * kk;																// Y-Coordinate.
+                fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
+                fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
+                fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
+                fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos, yPos, cid);             // print alphabet
+                fprintf(fps, "9 %s\n", pTitleFontName);												    // set font to print character code.
+                fprintf(fps, "50 %d add 725 %d sub moveto (%d) show\n", xPos, yPos+15, cid);            // print cid decimal value
+
+                if (!ii && !jj && !kk) {// print .notdef glyph
+                    fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos+25);           // as .notdef glyph is not associated with any Unicode so print 'none'. 
+                }
+                else {
+                    if (range) {
+                        fprintf(fps, "50 %d add 725 %d sub moveto (U+%04X) show\n", xPos, yPos + 25, ++unicodePoint);     // print unicode point in 4 hex digits.
+                        //printf(".......%2d) range=%u idxGrp=%d unicodePoint=%04X", kk, range, idxGrp, unicodePoint); getchar();
+                        if (range) range--;     // decrement range. There are still glyphs to printed that falls into contiguous range.
+                    }
+                    else {
+                        ++idxGrp;
+                        startGlyphID = grec[idxGrp].startGlyphID;                                           // Start Glyph Id
+                        //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 5) { printf("above none....%2d/%d) idxGrp=%d cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
+                        if (idxGrp > cntGrpRecords-1 || startGlyphID > cid) {
+                            fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos + 25);     // as glyph is not associated with any Unicode so print 'none'.
+                            --idxGrp;                                                                       // Decrement until startGlyphID equals cid.  
+                        }
+                        else {
+                            range = grec[idxGrp].endCharCode - grec[idxGrp].startCharCode + 1;              // Find out range of contiguous glyphs having Unicode Points.
+                            unicodePoint = grec[idxGrp].startCharCode;
+                            //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 5) { printf("..............%2d/%d) idxGrp=%d range=%d unicode=%04X cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, range, unicodePoint, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
+                            fprintf(fps, "50 %d add 725 %d sub moveto (U+%04X) show\n", xPos, yPos + 25, unicodePoint);    // print unicode point in 4 hex digits.
+                            //printf("else...%2d) range=%u idxGrp=%d unicodePoint=%04X", kk, range, idxGrp, unicodePoint); getchar();
+                            if (range) range--;     // decrement range. There are still glyphs to printed that falls into contiguous range.
+                        }
+                    }
+                }
+                cntGlyphPerPage++;
+            }
+        }
+    Label_Getout:
+        psFlushReport(fps, ++pagenum);
+        if (ii < lcLoop - 1) {
+            psInitNextPage(fps, pagenum + 1);		// setup for next page
+        }
+    }
+    delete[]grec;           // release memeory allocated for 'cmap' format 12 SequentialMapGroup_Record
+    if (pDerivedGroupRecords != NULL) *pDerivedGroupRecords = cntGrpRecords;
+}
+void printAlphabet_T42(FILE* fps, const short pTotalGlyphs, const char* pIndianFontName)
+{
+    //
+    // This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
+    // Print Alphabets in 8 X 16 matrix form
+    //
+    // 1. fps is input parameter of type FILE which holds Postscript program instructions.
+    // 2. pTotalGlyphs is input parameter indicating total glyphs associated with the font.
+    // 3. pIndianFontName is input parameter which is the font name of t42 cid font file.
+    //
     psInitPostscript(fps, pIndianFontName);
     const char* pFontName = "myfont";                   // Font to print Glyphs.
     const char* pTitleFontName = "myHelvetica";         // Font to print Titles
     int pagenum = 0;
-	const short lcResidual = pTotalGlyphs % 128;
-	const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);
-	for (short ii = 0; ii < lcLoop; ii++) {
-		for (short jj = 0, cntGlyph=0; jj < 8; jj++) {
-			unsigned int titlecode = ii * 128 + (jj << 4);
-			fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
-			fprintf(fps, "50 %d add 760 moveto (%d) show\n", 35 * jj, titlecode);						// print column title
-			fprintf(fps, "350 %d add 760 moveto (%d) show\n", 30 * jj, titlecode);						// print column title
-			fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
-			fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 615);									// Vertical line
-			fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
-			fprintf(fps, "50 790 260 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
-			fprintf(fps, "350 790 230 (CID) CTXT\n");													// Write title 'CID' by centering at RHS.
-			for (short kk = 0; kk < 16; kk++) {
-				if (lcResidual && ii == lcLoop - 1 && cntGlyph == lcResidual) goto Label_Getout;
-				uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph.
-				const short xPos_1 = 35 * jj;															// X-Coordinate.
-				const short xPos_2 = 30 * jj;															// X-Coordinate.
-				const short yPos = 40 * kk;																// Y-Coordinate.
-				fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
-				fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
-				fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
+    const short lcResidual = pTotalGlyphs % 128;
+    const short lcLoop = pTotalGlyphs / 128 + (lcResidual > 0);
+    for (short ii = 0; ii < lcLoop; ii++) {
+        for (short jj = 0, cntGlyph = 0; jj < 8; jj++) {
+            unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 %d add 760 moveto (%d) show\n", 35 * jj, titlecode);						// print column title
+            fprintf(fps, "350 %d add 760 moveto (%d) show\n", 30 * jj, titlecode);						// print column title
+            fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
+            fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 615);									// Vertical line
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 790 260 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            fprintf(fps, "350 790 230 (CID) CTXT\n");													// Write title 'CID' by centering at RHS.
+            for (short kk = 0; kk < 16; kk++) {
+                if (lcResidual && ii == lcLoop - 1 && cntGlyph == lcResidual) goto Label_Getout;
+                uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph.
+                const short xPos_1 = 35 * jj;															// X-Coordinate.
+                const short xPos_2 = 30 * jj;															// X-Coordinate.
+                const short yPos = 40 * kk;																// Y-Coordinate.
+                fprintf(fps, "10 %s\n", pTitleFontName);												// set font to print row title
+                fprintf(fps, "20 725 %d sub moveto (%1X) show\n", yPos, kk);							// print row title.
+                fprintf(fps, "12 %s\n", pFontName);												        // set font to print alphabets.
                 fprintf(fps, "50 %d add 725 %d sub moveto <%04x> show\n", xPos_1, yPos, cid);           // print alphabets
                 fprintf(fps, "11 %s\n", pTitleFontName);												// set font to print character code.
-				fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
-				cntGlyph++;
-			}
-		}
-		Label_Getout:
-		psFlushReport(fps, ++pagenum);
-		if (ii < lcLoop - 1) {
-			psInitNextPage(fps, pagenum +1);		// setup for next page
-		}
-	}
+                fprintf(fps, "350 %d add 725 %d sub moveto (%d) show\n", xPos_2, yPos, cid);			// print character code of alphabets.
+                cntGlyph++;
+            }
+        }
+    Label_Getout:
+        psFlushReport(fps, ++pagenum);
+        if (ii < lcLoop - 1) {
+            psInitNextPage(fps, pagenum + 1);		// setup for next page
+        }
+    }
 }
 void debugSwap()
 {
@@ -461,7 +710,7 @@ void debugListOfCMapEncodingRecords(const STTFCmapTable_Encoding* pListOfCmapEnc
     fprintf(stdout, "%s\n", ptrLine);
     fprintf(stdout, "\nHit any key to continue.....\n");	     getchar();
 }
-void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, const STTFCmapTable_Format_4_Segment_Array pSegArray, const uint16_t pSegmentCount, const uint16_t pPlatformID, const uint16_t pPlatformSpecificID, const char* pTrueTypeFontFile)
+void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, const STTFCmapTable_Format_4_Segment_Array pSegArray, const uint16_t pSegmentCount, const uint16_t pDerivedGroupRecords, const uint16_t pPlatformID, const uint16_t pPlatformSpecificID, const char* pTrueTypeFontFile)
 {
     static const char* asPlatform[] = {
         "Unicode", "Macintosh", "Reserved", "Microsoft"
@@ -511,6 +760,9 @@ void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, co
     fprintf(stdout, "   Platform Specific Identifier                    : %u (%s)\n", pPlatformSpecificID, asPlatformSpecific[pPlatformID][pPlatformSpecificID]);
     fprintf(stdout, "   Format                                          : %u\n", pCmapFormat.format);           // Subtable format; set to 4.
     fprintf(stdout, "   Length of the subtable                          : %u bytes\n", pCmapFormat.length);     // This is the length in bytes of the subtable.
+    if (pDerivedGroupRecords) {
+        fprintf(stdout, "   Derived Group records from SegArray & SegCount  : %d\n", pDerivedGroupRecords);     // Derived group records from segment count required to display CID and Unicode Point.
+    }
     fprintf(stdout, "   segCountX2 (2 * segCount)                       : %u\n", pCmapFormat.segCountX2);       // 2 × segCount.
     fprintf(stdout, "   searchRange (2 * ((2**floor(log2(segCount))))   : %u\n", pCmapFormat.searchRange);      // Maximum power of 2 less than or equal to segCount, times 2. i.e. ((2**floor(log2(segCount))) * 2, where “**” is an exponentiation operator)
     fprintf(stdout, "   entrySelector (floor(log2(segCount)))           : %u\n", pCmapFormat.entrySelector);    // Log2 of the maximum power of 2 less than or equal to numTables (log2(searchRange/2), which is equal to floor(log2(segCount)))
@@ -524,7 +776,7 @@ void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, co
     const uint16_t segmentLHS = pSegmentCount / 2 + (pSegmentCount % 2);    // Segments at left hand side.
     const uint16_t segmentRHS = pSegmentCount / 2;                          // Segments at right hand side.
     for (uint16_t ii=0, jj=0; ii < segmentLHS; ii++, jj++) {
-        fprintf(stdout, "  %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5u %*c%5u",
+        fprintf(stdout, "  %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5d %*c%5u",
             ii + 1,
             pSegArray.startCode[ii],                    // Starting character code for each segment.
             6, cSP, pSegArray.startCode[ii],            // Unicode Point.
@@ -535,7 +787,7 @@ void debugCMapSegmeentArrayFormat_4(const STTFCmapTable_Format_4 pCmapFormat, co
          );
         if (jj < segmentRHS) {
             uint16_t kk = segmentLHS + jj;
-            fprintf(stdout, "%*c %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5u %*c%5u\n",
+            fprintf(stdout, "%*c %3d)  %-5u %*cU+%04X %*c%-5u %*cU+%04X %*c%5d %*c%5u\n",
                 20, cSP,
                 kk + 1,
                 pSegArray.startCode[kk],                    // Starting character code for each segment.
@@ -800,9 +1052,12 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
     }
     delete []aFound;                                 // release allocated memory.
 }
-bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdisplay)
+bool processCommandLine(const int argc, char* argv[], short& pArgId, bool* isdisplay)
 {
     //
+    // This function assists in processing command line arguments.
+    //
+//
     // This function assists in processing command line arguments.
     //
     // 1. argc is the total number of command line arguments
@@ -836,16 +1091,17 @@ bool processCommandLine(const int argc, char* argv[], short &pArgId, bool* isdis
 int main(int argc, char* argv[])
 {
     //
-    // main -d filename.ttf
-    //		-d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
+    // ttf2postscriptcid -d -u filename.ttf
+    //		             -d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
+    //		             -u refers to include unicode in the display Glyphs present in the charcater set of ttf font.
     //
     bool isdisplay = false;                     // Initialize with false
     short argIdx = 0;                           // This will indicate the argument id (1 or 2) having filename.
-    if (argc < 2 || argc > 4|| !processCommandLine(argc, argv, argIdx, &isdisplay)) {
+    if (argc < 2 || argc > 4 || !processCommandLine(argc, argv, argIdx, &isdisplay)) {
 #if _MSC_VER			// Visual Studio
-        fprintf(stdout, "usage: ttf2postscriptcid.exe -d filename.ttf");
+        fprintf(stdout, "usage: ttf2postscriptcid -d -u filename.ttf");
 #elif __GNUC__	|| __CYGWIN__		// gcc
-        fprintf(stdout, "usage: ./ttf2postscriptcid -d filename.ttf");
+        fprintf(stdout, "usage: ./ttf2postscriptcid -d -u filename.ttf");
 #endif
         fprintf(stdout, "       -d display reports.\n");
         printf("\nhit any key....");	getchar();
@@ -1147,10 +1403,12 @@ int main(int argc, char* argv[])
     }
 
     STTFCmapTable_Format_4 cmapFormat_4;
-    STTFCmapTable_Format_12 cmapFormat_12;
+    STTFCmapTable_Format_12 cmapFormat_12 = {0};
     STTFCmapTable_Format_4_Segment_Array segArray = {NULL, 0, NULL, NULL, NULL};
-    STTFCmapTable_SequentialMapGroup_Record *groupRecord=NULL;
-    uint16_t segcount;
+    STTFCmapTable_SequentialMapGroup_Record *groupRecord=NULL;                          // Format 12.
+    uint16_t segcount=0;                                                                // total number of segments which is applicable to format 4.
+    long offsetIdRangeOffsetFormat_4=0;                                                 // file offset at which idRangeOffset (format 4) begins from beginning of the ttf file.
+    bool isformat12 = false;                                                            // This will be set if Format 12 is present
     for (short ii = 0; ii < cmapEncodingRecord; ii++) {
         if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
             (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
@@ -1158,7 +1416,7 @@ int main(int argc, char* argv[])
             if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
-                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
+                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u, Error(%d)\n", seekOffset, errno); // error
                 fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             fread(&cmapFormat_4, sizeof(STTFCmapTable_Format_4), 1, fttf);
@@ -1184,7 +1442,7 @@ int main(int argc, char* argv[])
                 fprintf(stdout, " main(): Memory Allocation error of Cmap::startCode: segcount: %d.\n", segcount); // error
                 fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
-            segArray.idDelta = new uint16_t[segcount];
+            segArray.idDelta = new int16_t[segcount];
             if (!segArray.idDelta) {
                 fprintf(stdout, " main(): Memory Allocation error of Cmap::idDelta: segcount: %d.\n", segcount); // error
                 fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
@@ -1219,6 +1477,8 @@ int main(int argc, char* argv[])
                 fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array idRangeOffset
+            offsetIdRangeOffsetFormat_4 = ftell(fttf);                               // file offset at which idRangeOffset begins from beginning of the ttf file.
+            //printf("offsetIdRangeOffsetFormat_4: %ld", offsetIdRangeOffsetFormat_4); getchar();
             fread(segArray.idRangeOffset, sizeof(uint16_t), segcount, fttf);
             if (errno) {
                 fprintf(stdout, " main(): File error while reading object Segment Array idRangeOffset. segcount:%d, Error(%d)\n", segcount, errno); // error
@@ -1264,6 +1524,7 @@ int main(int argc, char* argv[])
                 groupRecord[jj].endCharCode = SWAPLONG(groupRecord[jj].endCharCode);        // Last character code in this group.
                 groupRecord[jj].startGlyphID = SWAPLONG(groupRecord[jj].startGlyphID);      // Glyph index corresponding to the starting character code. subsequent charcters are mapped to sequential glyphs
             }
+            isformat12 = true;                                                      // Format 12 is present.
         }
         else continue;
     }
@@ -1649,21 +1910,22 @@ int main(int argc, char* argv[])
     fprintf(fcid, "%% -------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "Mycidfont dup /CIDFontName get exch /CIDFont defineresource\n");  // Register instance of Mycidfont with /CIDFont resource category.
     fprintf(fcid, "/CIDFontName get /Identity-H [2 index] composefont pop\n");       // Type 0 Composite font. Operator composefont creates a Type 0 font with the name CIDFontName. Note that Type 0 fonts with FMapType 9 require a CMap entry in the font dictionary which is /Identity-H.
-    fclose(fttf);                                           // close ttf file handle.
-    fclose(fcid);                                           // close cid file handle.
-    printAlphabet_T42(fps, numOfGlyphs, strPSFontName);     // Print Glyphs along with corresponding CIDs
-    fclose(fps);                                            // close Postscript file handle.
+    fclose(fcid);                                                   // close cid file handle.
+    uint16_t derivedGroupRecords;                                   // This is derived from segArray and segcount. Applicable to format 4. This is required to display CID and Unicode Point.
+    isformat12 ? printAlphabet_T42(fps, groupRecord, cmapFormat_12.numGroups, numOfGlyphs, strPSFontName) : printAlphabet_T42(fttf, fps, offsetIdRangeOffsetFormat_4, segArray, segcount, numOfGlyphs, &derivedGroupRecords, strPSFontName);
+    fclose(fps);                                                    // close Postscript file handle.
+    fclose(fttf);                                                   // close ttf file handle.
     if (isdisplay) {
         //debugString();
         debugSubTables(ttfSubTable, strTrueTypeFontFile);                                                   // debug Sub table
         debugListOfTables(listOfTables, numOfTables, numOfGlyphs, strPSFontName, strTrueTypeFontFile);      // Debug List of Tables
-        debugListOfCMapEncodingRecords(cmapSubTableList, cmapEncodingRecord, strTrueTypeFontFile);        // Debug List of Cmap Encoding Subtables.
+        debugListOfCMapEncodingRecords(cmapSubTableList, cmapEncodingRecord, strTrueTypeFontFile);          // Debug List of Cmap Encoding Subtables.
         for (short ii = 0; ii < cmapEncodingRecord; ii++) {
             if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 3) ||    // Unicode: Unicode BMP-only.
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 1))      // Microsoft: Unicode BMP-only.
             {
                 if (cmapSubTableList[ii].platformID == 3) continue;     // Unicode and Microsoft have same data in STTFCmapTable_Format_4 structure. 
-                debugCMapSegmeentArrayFormat_4(cmapFormat_4, segArray, segcount, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
+                debugCMapSegmeentArrayFormat_4(cmapFormat_4, segArray, segcount, isformat12 ? 0 : derivedGroupRecords, cmapSubTableList[ii].platformID, cmapSubTableList[ii].platformSpecificID, strTrueTypeFontFile);
             }
             else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
@@ -1698,14 +1960,14 @@ int main(int argc, char* argv[])
     if (listOfCvt) delete[]listOfCvt;                                       // release allocated memory for 'cvt' table.
 
     // completed successfully
-    printf("\nConversion has been successfully completed and the following two files have been generated.\n");
-    printf("  1. %s is the converted file corresponding to the TrueType font %s.\n", t42Filenamet, strTrueTypeFontFile);
+    fprintf(stdout, "\nConversion has been successfully completed and the following two files have been generated.\n");
+    fprintf(stdout, "  1. %s is the converted file corresponding to the TrueType font %s.\n", t42Filenamet, strTrueTypeFontFile);
 #if _MSC_VER			// Visual Studio
-    printf("  2. %s is a postscript program file executable either through Ghostscript (gswin64c.exe) or through GSView (gsview64.exe).\n", psFilename);
+    fprintf(stdout, "  2. %s is a postscript program file executable either through Ghostscript (gswin64c.exe) or through GSView (gsview64.exe).\n", psFilename);
 #elif __GNUC__	|| __CYGWIN__		// gcc
-    printf("  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
+    fprintf(stdout, "  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
 #endif
-    printf("     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
-    printf("     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
+    fprintf(stdout, "     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
+    fprintf(stdout, "     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
     exit(0);
 }
