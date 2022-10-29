@@ -217,8 +217,9 @@ typedef struct STTFCmapTable_Format_4_Segment_Array {  // Four parallel arrays d
     uint16_t* endCode;                  //	Ending character code for each segment, last = 0xFFFF. Allocate memory for the array with segCount size.
     uint16_t reservedPad;               //	This value should be zero.
     uint16_t* startCode;                //	Starting character code for each segment. Allocate memory for the array with segCount size.
-    uint16_t* idDelta;                  //	Delta for all character codes in segment. Allocate memory for the array with segCount size.
+    int16_t* idDelta;                   //	Delta for all character codes in segment. Allocate memory for the array with segCount size.
     uint16_t* idRangeOffset;            //	Offset in bytes to glyph indexArray, or 0. Allocate memory for the array with segCount size.
+    uint16_t* glyphIdArray;             //	Glyph index array (arbitrary length).
 } STTFCmapTable_Format_4_Segment_Array;
 
 typedef struct STTFPostTable {  // The 'post' table. Total elements 9.

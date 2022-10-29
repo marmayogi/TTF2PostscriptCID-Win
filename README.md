@@ -20,7 +20,7 @@ This conversion utility has been developed based on 3rd approach.
 - This utility is a console application developed on Microsoft Visual Studio Community 2022 (64-bit) Edition- Version 17.3.5 under Windows 10.
 - This utility is also available in Linux platform.
 - Note that this program is 100% portable across Windows-10 and Linux. i.e. The source files (main.ccp and ttf.h) are same and identical across platforms.
-- Ghostsciprt version is 9.52 (64 bit) and GSView version is 5.0 (64 bit).
+- My desktop has Ghostscript 10.0.0 version (64 bit) and GSView 5.0 version (64 bit).
 
 
 ##### References
@@ -38,7 +38,7 @@ Create a folder cidfonts in **D** drive and store ttf file which should be conve
 If option **-d** is specified, then ttf table data will be displayed during execution.
 This utility generates the following two files as output:
 1. **filename.t42** is the required converted file with extension Type 42.
-2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs.
+2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs and Unicode Points. If a Glyph does not associate with an Unicode Point, then `none` will be printed.
 3. Invoke Ghostscript to execute a postscript program as follows:
     - `gswin64c.exe "D:\cidfonts\filename.t42" "D:\cidfonts\filename.ps"`
 
