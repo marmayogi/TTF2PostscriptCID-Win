@@ -1516,7 +1516,7 @@ int main(int argc, char* argv[])
         }
         else if ((cmapSubTableList[ii].platformID == 0 && cmapSubTableList[ii].platformSpecificID == 4) ||    // Unicode: Unicode non-BMP characters allowed
                 (cmapSubTableList[ii].platformID == 3 && cmapSubTableList[ii].platformSpecificID == 10)) {        // Microsoft: Unicode UCS-4.
-            if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 4) == -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
+            if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 4) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
                 fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
