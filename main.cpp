@@ -1761,25 +1761,25 @@ int main(int argc, char* argv[])
 
 
     // Prep table
+    STTFPrepTable* listOfPrep = NULL;                                           // Initialize
+    uint32_t lengthOfPrepTable = 0;                                             // flush
     const short idxPrepTable = getTable(listOfTables, numOfTables, "prep");     // collect index corresponding to 'prep' table.
-    if (idxPrepTable == -1) {
-        fprintf(stdout, " main(): The 'prep' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
-    }
-    if (fseek(fttf, listOfTables[idxPrepTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxPrepTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
-    }
-    uint32_t lengthOfPrepTable = listOfTables[idxPrepTable].length;                 // length of the 'prep' table in bytes
-    STTFPrepTable* listOfPrep = new STTFPrepTable[lengthOfPrepTable];               // Allocate memeory
-    if (!listOfPrep) {
-        fprintf(stdout, " main(): Memory Allocation error for object STTFPrepTable. Total Offsets: %d.\n", lengthOfPrepTable); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
-    }
-    fread(listOfPrep, sizeof(STTFPrepTable), lengthOfPrepTable, fttf);
-    if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFPrepTable(%d). Error(%d)\n", lengthOfPrepTable, errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+    if (idxPrepTable != -1) {
+        if (fseek(fttf, listOfTables[idxPrepTable].offset, SEEK_SET)) {
+            fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxPrepTable].offset); // error
+            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        }
+        lengthOfPrepTable = listOfTables[idxPrepTable].length;                 // length of the 'prep' table in bytes
+        listOfPrep = new STTFPrepTable[lengthOfPrepTable];      // Allocate memeory
+        if (!listOfPrep) {
+            fprintf(stdout, " main(): Memory Allocation error for object STTFPrepTable. Total Offsets: %d.\n", lengthOfPrepTable); // error
+            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        }
+        fread(listOfPrep, sizeof(STTFPrepTable), lengthOfPrepTable, fttf);
+        if (errno) {
+            fprintf(stdout, " main(): File error while reading object STTFPrepTable(%d). Error(%d)\n", lengthOfPrepTable, errno); // error
+            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+        }
     }
 
 
