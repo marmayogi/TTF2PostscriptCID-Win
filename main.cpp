@@ -118,8 +118,8 @@ int cmpfuncGroupRecordFormat4(const void* a, const void* b)
 void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record* pGroupRecord, const short pTotalGroupRecords, const short pTotalGlyphs, const char* pIndianFontName)
 {
     //
-    // This font has been convertedf from ttf to CIDFont type 2 with base font type 42 (double byte). 
-    // Print Alphabets in 8 X 16 matrix form with unicode details.
+    // This function displays glyphs with cid and unicode points for format 12.
+    // Print Alphabets in 8 X 16 matrix form.
     //
     // 1. fps is input parameter of type FILE which holds Postscript program instructions.
     // 2. pGroupRecord is input array of type STTFCmapTable_SequentialMapGroup_Record supplying start and ending unicode along with start glyph identifier.
@@ -208,6 +208,7 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
 {
     //
     // This function displays glyphs with cid and unicode points for format 4.
+    // Print Alphabets in 8 X 16 matrix form.
     //
     // 1. fttf is the input file handle for ttf font.
     // 2. fps is the input file handle for postscript program.
@@ -256,7 +257,7 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
                     fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
                 }
                 glyphid = SWAPWORD(glyphid);                                                        // convert to little endian.
-                if (glyphid) glyphid += pSegArray.idDelta[ii];                                      // convert to little endian.
+                if (glyphid) glyphid += pSegArray.idDelta[ii];                                      // find out Glyph id.
                 grec[kk + jj].startGlyphID = glyphid;                                               // store glyph id.
                 grec[kk + jj].startCharCode = pSegArray.startCode[ii]+jj;                           // start Character Code.
                 grec[kk + jj].endCharCode = pSegArray.startCode[ii] + jj;                           // end  Character Code.
@@ -269,6 +270,12 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
     qsort(grec, static_cast<size_t>(cntGrpRecords), sizeof(STTFCmapTable_GRecord), cmpfuncGroupRecordFormat4);      // sort group records based on startGlyphID.
     //printf("after sort.....start=%04x end=%04X glyphid=%u", grec[0].startCharCode, grec[0].endCharCode, grec[0].startGlyphID); getchar();
     //for (uint16_t ii = cntGrpRecords - 4; ii < cntGrpRecords; ii++) {printf("start[%u]=%04x end[%u]=%04X glyphid[%u]=%u", ii,grec[ii].startCharCode, ii,grec[ii].endCharCode, ii,grec[ii].startGlyphID); getchar();}
+    /**
+    FILE* ftmp;
+    fopen_s(&ftmp, "Grec.txt", "w");    fprintf(ftmp, "slno\t....start.....\t\t....end.....\t\tglyph id\n");
+    for (short ii = 0; ii < cntGrpRecords; ii++) { fprintf(ftmp, "%4d\t%5u\t%04X\t\t%5u\t%04x\t\t%u\n", ii, grec[ii].startCharCode, grec[ii].startCharCode, grec[ii].endCharCode, grec[ii].endCharCode, grec[ii].startGlyphID); }
+    fclose(ftmp);
+    */
 
     psInitPostscript(fps, pIndianFontName);                         // Initialize Postscript.
     const char* pFontName = "myfont";                               // Font to print Glyphs.
@@ -313,15 +320,16 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
                     else {
                         ++idxGrp;
                         startGlyphID = grec[idxGrp].startGlyphID;                                           // Start Glyph Id
-                        //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 5) { printf("above none....%2d/%d) idxGrp=%d cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
+                        //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 14) { printf("above none....%2d/%d) idxGrp=%d cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
                         if (idxGrp > cntGrpRecords-1 || startGlyphID > cid) {
                             fprintf(fps, "50 %d add 725 %d sub moveto (none) show\n", xPos, yPos + 25);     // as glyph is not associated with any Unicode so print 'none'.
                             --idxGrp;                                                                       // Decrement until startGlyphID equals cid.  
                         }
                         else {
+                            if (startGlyphID < cid) idxGrp++;  // out of turn startGlyphID w.r.t. cid. This happened in Microsoft's  Latha font. start(U+2219), end(U+2219) and startGlyphID(346). 1st/Nov/2022.
                             range = grec[idxGrp].endCharCode - grec[idxGrp].startCharCode + 1;              // Find out range of contiguous glyphs having Unicode Points.
                             unicodePoint = grec[idxGrp].startCharCode;
-                            //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 5) { printf("..............%2d/%d) idxGrp=%d range=%d unicode=%04X cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, range, unicodePoint, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
+                            //if (ii == lcLoop - 1 && idxGrp > cntGrpRecords - 14) { printf("..............%2d/%d) idxGrp=%d range=%d unicode=%04X cid=%d startGlyphID=%d start=%04X end=%04X", kk, jj, idxGrp, range, unicodePoint, cid, startGlyphID, grec[idxGrp].startCharCode, grec[idxGrp].endCharCode); getchar(); }
                             fprintf(fps, "50 %d add 725 %d sub moveto (U+%04X) show\n", xPos, yPos + 25, unicodePoint);    // print unicode point in 4 hex digits.
                             //printf("else...%2d) range=%u idxGrp=%d unicodePoint=%04X", kk, range, idxGrp, unicodePoint); getchar();
                             if (range) range--;     // decrement range. There are still glyphs to printed that falls into contiguous range.
@@ -1993,7 +2001,7 @@ int main(int argc, char* argv[])
 #elif __GNUC__	|| __CYGWIN__		// gcc
     fprintf(stdout, "  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
 #endif
-    fprintf(stdout, "     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
+    fprintf(stdout, "     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs and Unicode Points in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
     fprintf(stdout, "     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
     exit(0);
 }
