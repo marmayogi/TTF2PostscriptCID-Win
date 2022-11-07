@@ -155,7 +155,7 @@ void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record*
             fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
             fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
             fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
-            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at paper.
             for (short kk = 0; kk < 16; kk++) {
                 if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout; // All glyphs are printed so getout.
                 uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.
@@ -295,7 +295,7 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
             fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
             fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
             fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
-            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at LHS.
+            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at paper.
             for (short kk = 0; kk < 16; kk++) {
                 if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout; // All glyphs are printed so getout.
                 uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.

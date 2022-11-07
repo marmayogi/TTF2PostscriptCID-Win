@@ -91,3 +91,16 @@ This utility has been tested for the following languages successfully.
 6. [Oriya](https://fonts.google.com/noto/specimen/Noto+Sans+Oriya)
 7. [Bengali](https://fonts.google.com/noto/specimen/Noto+Sans+Bengali) (assamese)
 8. [Devanagari](https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari) (Sanskrit, Hindi and Marathi)
+
+##### Apples's Truetype font vs Adobe's font.
+
+- A very key difference is that PostScript supports `cubic Bézier` curves, where each arc of each glyph is described by `four control` points. TrueType uses `quadratic splines`, with each arc having only `three control` points. This offers less control over the shape of the curve.
+-  Another Key difference is the way they perform `hinting`. Since TrueType was originally targeted to low resolution screen rendering, its hinting system works by adjusting the curves to fit nicely on pixel lattice points, using a fairly elaborate `bytecode mechanism`. To edit the hints of a TrueType font, you must learn ttf's low-level programming language which is daunting task for the typical font designer. PostScript fonts were intended for higher resolution paper prints, and used guidelines to snap curves to right angles at appropriate places. For a font designer, these hints are pretty easy to understand and declare.
+
+##### UTF-8 Support for t42 fonts.
+
+For a Truetype font to be recognized by a Postscript interpreter, it must be enclosed in a Postscript font dictionary as a CID font with CIDFontType 2 and FontType 42. CIDMap maps CID(Character Indetitifer) to Glyph index and enforces Identity mapping i.e, character code 0 maps to Glyph index 0, character code 1 maps to Glyph index 1 and so on. This `t42` fonts, converted font from ttf, are futile unless renders support to Unicode (UTF-8). 
+This has been demonstrated by `Tamil.ps` postscript script in which hex strings in angular brackets are supplied as operands to postscript's `show` operator. Of course the hex string definitely must represent some UTF-8 encoded string which should come from an application software that uses the `t42` font.
+To get an answer for this important question read the post [How to implement Unicode (UTF-8) support for a CID-keyed font (Adobe's Type 0 Composite font) converted from ttf?](https://stackoverflow.com/questions/74318928/how-to-implement-unicode-utf-8-support-for-a-cid-keyed-font-adobes-type-0-co).
+
+
