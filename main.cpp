@@ -1004,7 +1004,7 @@ void writeHexData(FILE* fcid, const char* pData, const uint32_t pLengthOfData)
 }
 uint16_t listTablesIncluded_sfnts(FILE* fcid, const STTFTableDirectory* pListOfTables, const uint16_t pNumOfTables)
 {
-    uint16_t totalRequiredTables = sizeof(asTablesRequired) / sizeof(char*);
+    uint16_t totalRequiredTables = sizeof(asTablesRequired) / sizeof(char*);        // declared at the top.
     uint16_t totalIncludedTables = 0, kk = 0;
     while (kk < totalRequiredTables) {
         if (getTable(pListOfTables, pNumOfTables, asTablesRequired[kk]) >= 0) {
