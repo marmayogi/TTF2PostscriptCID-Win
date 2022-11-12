@@ -13,6 +13,18 @@
 #include <errno.h>
 #include "ttf.h"
 
+static const char* asTablesRequired[] = {
+    "cmap",         // character to glyph mapping
+    "glyf",         // glyph data
+    "head",         // font header
+    "hhea",         // horizontal header
+    "hmtx",         // horizontal metrics
+    "loca",         // index to location
+    "maxp",         // maximum profile
+    "name",         // naming
+    "post",         // PostScript
+    "prep",         // control value program
+};
 typedef struct STTFCmapTable_GRecord {  // Each sequential map group record specifies a character range and the starting glyph ID mapped from the first character.
     uint16_t startCharCode;             // First character code in this group.
     uint16_t endCharCode;               // Last character code in this group.
@@ -990,20 +1002,21 @@ void writeHexData(FILE* fcid, const char* pData, const uint32_t pLengthOfData)
     while (residualBytes-- > 0) fprintf(fcid, "00");                // append pad to make up long boundary.
     fprintf(fcid, "00>\n");                                         // Append '00' before closing angle bracket. This is required in order to make the table length odd within angle brackets.
 }
+uint16_t listTablesIncluded_sfnts(FILE* fcid, const STTFTableDirectory* pListOfTables, const uint16_t pNumOfTables)
+{
+    uint16_t totalRequiredTables = sizeof(asTablesRequired) / sizeof(char*);
+    uint16_t totalIncludedTables = 0, kk = 0;
+    while (kk < totalRequiredTables) {
+        if (getTable(pListOfTables, pNumOfTables, asTablesRequired[kk]) >= 0) {
+            fprintf(fcid, "%% %2d) %s\n", kk+1, asTablesRequired[kk]);
+            totalIncludedTables++;
+        }
+        ++kk;
+    }
+    return totalIncludedTables;
+}
 void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTable pSubTable, const STTFTableDirectory* pListOfTables, const uint16_t pNumOfTables)
 {
-    static const char* asTablesRequired [] = {
-        "cmap",         // character to glyph mapping
-        "glyf",         // glyph data
-        "head",         // font header
-        "hhea",         // horizontal header
-        "hmtx",         // horizontal metrics
-        "loca",         // index to location
-        "maxp",         // maximum profile
-        "name",         // naming
-        "post",         // PostScript
-        "prep",         // control value program
-    };
     uint16_t totalRequiredTables = sizeof(asTablesRequired) / sizeof(char*);
     bool *aFound = new bool[totalRequiredTables];
     if (!aFound) {
@@ -1933,6 +1946,8 @@ int main(int argc, char* argv[])
     fprintf(fcid, "end def\n");                                                 // The 'cidfont' Dictionary has been defined.
     fprintf(fcid, "\n%% ---------------------------------------------------------------------------------------------\n");
     fprintf(fcid, "%% Construct sfnts array which is a set of hex strings representing entire ttf file binary data.\n");
+    fprintf(fcid, "%% List of Tables included into sfnts array are as follows:\n");
+    listTablesIncluded_sfnts(fcid, listOfTables, numOfTables);
     fprintf(fcid, "%% ---------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "Mycidfont /sfnts [\n");                                                  // sfnts array definition begins. This is a set of hex string representing entire ttf file binary data.
     embedTablesAsHexStrings_sfnts(fttf, fcid, ttfSubTable, listOfTables, numOfTables);      // Embed tables as Hex String delimted by angle brackets.
