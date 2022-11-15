@@ -1959,7 +1959,7 @@ int main(int argc, char* argv[])
     fprintf(fcid, "%% -------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "Mycidfont dup /CIDFontName get exch /CIDFont defineresource\n");  // Register instance of Mycidfont with /CIDFont resource category.
     fprintf(fcid, "/CIDFontName get /Identity-H [2 index] composefont pop\n");       // Type 0 Composite font. Operator composefont creates a Type 0 font with the name CIDFontName. Note that Type 0 fonts with FMapType 9 require a CMap entry in the font dictionary which is /Identity-H.
-    fprintf(fcid, "%%EOF");       // Put an eof marker
+    fprintf(fcid, "%%EOF\n");                                       // Put an eof marker
     fclose(fcid);                                                   // close cid file handle.
     uint16_t derivedGroupRecords;                                   // This is derived from segArray and segcount. Applicable to format 4. This is required to display CID and Unicode Point.
     isformat12 ? printAlphabet_T42(fps, groupRecord, cmapFormat_12.numGroups, numOfGlyphs, strPSFontName) : printAlphabet_T42(fttf, fps, offsetIdRangeOffsetFormat_4, segArray, segcount, numOfGlyphs, &derivedGroupRecords, strPSFontName);
