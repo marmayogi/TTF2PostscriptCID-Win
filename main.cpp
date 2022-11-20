@@ -1870,12 +1870,13 @@ int main(int argc, char* argv[])
     */
     fprintf(fcid, "%%!PS-TrueTypeFont-%d-%d\n", headTable.version.whole, headTable.fontRevision.whole);   // %!PS-TrueTypeFont is required for disk-based Type 42 fonts on any interpreter that supports type 42 font.
     fprintf(fcid, "%%%%VMusage: %u %u\n", postTable.minMemType42, postTable.maxMemType42);  // This comment is not used by Postscript interpreter but is useful for application programs. Operator resourcestatus can be used to obtain VM requirement for a font resource.
-    fprintf(fcid, "\n%% --------------------------------------------------------------------------------------------------------------------------------\n");
+    fprintf(fcid, "\n%% ---------------------------------------------------------------------------------------------------------------------------------------\n");
     fprintf(fcid, "%% CIDInit is required for i) Building a Type 0 CIDFont or ii) Creating CMap dictionary.\n");
     fprintf(fcid, "%% A CMap dictionary is created with the assistance of operators defined in the CIDInit procedure set.\n");
-    fprintf(fcid, "%% CIDInit procedure set is an instance of the ProcSet resource category.\n");  // 
-    fprintf(fcid, "%% The use of these operators to construct a CMap for a CIDkeyed font has been discussed in Section 5.11.5, 'FMapType 9 Composite Fonts.'\n");  // 
-    fprintf(fcid, "%% --------------------------------------------------------------------------------------------------------------------------------\n\n");
+    fprintf(fcid, "%% CIDInit procedure set is an instance of the ProcSet resource category.\n");
+    fprintf(fcid, "%% The use of these operators to construct a CMap for a CID-keyed font has been discussed in Section 5.11.5, 'FMapType 9 Composite Fonts.'\n");   // Refer 'PostScript Language Reference Manual', 3rd Edition, Adobe Corporation.
+    fprintf(fcid, "%% Refer PLRM (PostScript Language Reference Manual), Third edition, Adobe Systems Incorporated.\n");  // 
+    fprintf(fcid, "%% ---------------------------------------------------------------------------------------------------------------------------------------\n\n");
     fprintf(fcid, "/CIDInit /ProcSet findresource begin\n");        // Building CMap dictionary. The operators needed to construct a CMap dictionary are contained in the CIDInit procedure set (an instance of the ProcSet resource category).
     fprintf(fcid, "  6 dict begin\n");                              // Dictionary construction begins with space for 10 key-value pairs.
     fprintf(fcid, "     begincmap\n");                              // This is must
