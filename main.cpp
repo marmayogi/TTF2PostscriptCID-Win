@@ -1,7 +1,7 @@
 //
 // This Conversion program was written by Marmayogi, Astrologer and Palmist, Sri Mahakali Jyothida Nilayam, Coimbatore, India.
 // This Converts TTF to a Type 2 CIDFont, with base font Type 42, which can be accessed through a postscript program.
-// This is particulary useful for Indian Languages having glyphs in excess of 255 in the character set.
+// This is particulary useful for Indian Languages having glyphs in excess of 256 in the character set.
 // 
 // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
 //
@@ -1135,17 +1135,16 @@ bool processCommandLine(const int argc, char* argv[], short& pArgId, bool* isdis
 int main(int argc, char* argv[])
 {
     //
-    // ttf2postscriptcid -d -u filename.ttf
+    // ttf2postscriptcid -d filename.ttf
     //		             -d refers to display. With this flag, this programs prints Subtable, Directory of Tables, and Name records from 'name' table. 
-    //		             -u refers to include unicode in the display Glyphs present in the charcater set of ttf font.
     //
     bool isdisplay = false;                     // Initialize with false
     short argIdx = 0;                           // This will indicate the argument id (1 or 2) having filename.
-    if (argc < 2 || argc > 4 || !processCommandLine(argc, argv, argIdx, &isdisplay)) {
+    if (argc < 2 || argc > 3 || !processCommandLine(argc, argv, argIdx, &isdisplay)) {  // Either 2 or 3 arguemnts are allowed.
 #if _MSC_VER			// Visual Studio
-        fprintf(stdout, "usage: ttf2postscriptcid -d -u filename.ttf");
+        fprintf(stdout, "usage: ttf2postscriptcid.exe -d filename.ttf\n");
 #elif __GNUC__	|| __CYGWIN__		// gcc
-        fprintf(stdout, "usage: ./ttf2postscriptcid -d -u filename.ttf");
+        fprintf(stdout, "usage: ./ttf2postscriptcid -d filename.ttf\n");
 #endif
         fprintf(stdout, "       -d display reports.\n");
         printf("\nhit any key....");	getchar();

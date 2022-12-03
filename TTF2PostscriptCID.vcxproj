@@ -128,6 +128,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(SolutionDir)\x64\Release\$(ProjectName).exe" "$(SolutionDir)ttf2postscriptcid.exe"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
