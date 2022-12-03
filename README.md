@@ -15,7 +15,7 @@ Adobe supports 3 approaches for conversion of ttf fonts to Type 42 base font.
 Since number of glyphs exceed 256, conversion utility should be developed based on either 2nd approach or 3rd approach.
 
 - The 3rd approach is not only flexible over 2nd approach but also support for unicode is implementable.
-- In the 3rd approach the hierarchy of composite fonts will never exceed 1 whereas in the case of 2nd approach the depth will be atleast 2 and number of Glyphs in the character set will decide the hierarchy’s depth. i.e. Depth of Hierarchy  = numGlyphs/256 + ((numGlyphs % 256) > 0). i.e. add 1 if remainder is non-zero.
+- In the 3rd approach the hierarchy of composite fonts will never exceed 1 whereas in the case of 2nd approach the depth will be atleast 2 and number of Glyphs in the character set will decide the hierarchy’s actual depth. i.e. Depth of Hierarchy  = numGlyphs/256 + ((numGlyphs % 256) > 0). i.e. add 1 if remainder is non-zero.
 
 This conversion utility has been developed based on 3rd approach. 
 
