@@ -59,7 +59,7 @@ There are 534 `Tamil` and `Latin` Glyphs in the character set which will be disp
 
 #### Testing t42 Font.
 
-In order to test **NotoSansTamil-Regular.t42** CIDfont file, edit a file **tamil.ps** using nodepad in the folder "D:\cidfonts\" with the following postscript code:
+In order to test **NotoSansTamil-Regular.t42** CIDfont file, edit a file **tamil.ps** using nodepad in the folder `D:\cidfonts\` with the following postscript code:
 ```
 %!PS-Adobe-3.0
 /myNoTo {/NotoSansTamil-Regular findfont exch scalefont setfont} bind def
