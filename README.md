@@ -22,7 +22,7 @@ This conversion utility has been developed based on 3rd approach.
 
 ##### Technical Features
 - This utility is a console application developed on Microsoft Visual Studio Community 2022 (64-bit) Edition- Version 17.3.5 under Windows 10.
-- This utility is also available in Linux platform.
+- This utility is also available in [Linux platform](https://github.com/marmayogi/TTF2PostscriptCID-Linux).
 - Note that this program is 100% portable across Windows-10 and Linux. i.e. The source files (main.ccp and ttf.h) are same and identical across platforms.
 - My desktop has Ghostscript 10.0.0 version (64 bit) and GSView 5.0 version (64 bit).
 
@@ -47,7 +47,7 @@ This utility generates the following two files as output:
     - `gswin64c.exe "D:\cidfonts\filename.t42" "D:\cidfonts\filename.ps"`
 
 ##### Example
-[Google](https://fonts.google.com/noto/specimen/Noto+Sans+Tamil) has developed a family of Tamil fonts called **Noto Sans Tamil**.
+**Google** has developed a family of Tamil fonts called [Noto Sans Tamil](https://fonts.google.com/noto/specimen/Noto+Sans+Tamil).
 In order to convert **NotoSansTamil-Regular.ttf** font to Type 42 CIDfont, issue the following command:
 - `ttf2Postscriptcid.exe -d "D:\cidfonts\NotoSansTamil-Regular.ttf"`
 
