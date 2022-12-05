@@ -39,8 +39,7 @@ This program has been developed based on the following documents.
 Create a folder `D:\cidfonts` in **D** drive (or any other drive) and store `ttf` file which should be convered. Now issue the following command:
 - `ttf2Postscriptcid.exe -d "D:\cidfonts\filename.ttf"`
 
-**Note:** If option **-d** is specified, then `ttf` table data will be displayed during execution.
-
+If option **-d** is specified, then `ttf` table data will be displayed during execution.
 This utility generates the following two files as output:
 1. **filename.t42** is the required converted file with extension Type 42.
 2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs and Unicode Points. If a Glyph does not associate with an Unicode Point, then `none` will be printed.
@@ -77,7 +76,7 @@ showpage
 Issue the following Ghostscript command  to execute the `tamil.ps` postscript program. 
 - `gswin64c.exe "D:\cidfonts\NotoSansTamil-Regular.t42" "D:\cidfonts\tamil.ps`
 
-This will display strings `தமிழ் தங்களை வரவேற்கிறது!` and `Tamil Welcomes You!`.
+This will display two strings `தமிழ் தங்களை வரவேற்கிறது!` and `Tamil Welcomes You!` respectively in subsequent rows.
 
 Note that the strings for `show` operator are in Hexadecimal format embeded within angular brackets. Operator `show` extracts 2 bytes at a time and maps this CID (16 bit value) to a Glyph.
 For example, the first 4 Hex digits in the 1st string is `0019` whose decimal equivalent is `25`. This maps to glyph `த`.
