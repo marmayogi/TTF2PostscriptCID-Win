@@ -39,7 +39,8 @@ This program has been developed based on the following documents.
 Create a folder `D:\cidfonts` in **D** drive (or any other drive) and store `ttf` file which should be convered. Now issue the following command:
 - `ttf2Postscriptcid.exe -d "D:\cidfonts\filename.ttf"`
 
-If option **-d** is specified, then `ttf` table data will be displayed during execution.
+**Note:** If option **-d** is specified, then `ttf` table data will be displayed during execution.
+
 This utility generates the following two files as output:
 1. **filename.t42** is the required converted file with extension Type 42.
 2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs and Unicode Points. If a Glyph does not associate with an Unicode Point, then `none` will be printed.
