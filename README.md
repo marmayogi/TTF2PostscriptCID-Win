@@ -109,7 +109,7 @@ Character code 2 maps to Glyph index 2
 Character code NumGlyphs-1 maps to Glyph index NumGlyphs-1
 ```
 This `t42` fonts, converted font from `ttf`, are futile unless renders support to Unicode (UTF-8). 
-This has been demonstrated by `Tamil.ps` postscript script in which hexadecimal strings in angular brackets are supplied as operands to postscript's `show` operator. Of course the hex string definitely must represent some UTF-8 encoded string which should come from an application software that uses the `t42` font.
+This has been demonstrated by `Tamil.ps` postscript script in which hexadecimal strings in angular brackets are supplied as operands to postscript's `show` operator. Of course this hex string definitely must represent some UTF-8 encoded string which should have been supplied by an application software that uses the `t42` font.
 To get an answer for this important question read the post [How to implement Unicode (UTF-8) support for a CID-keyed font (Adobe's Type 0 Composite font) converted from ttf?](https://stackoverflow.com/questions/74318928/how-to-implement-unicode-utf-8-support-for-a-cid-keyed-font-adobes-type-0-co).
 
 
