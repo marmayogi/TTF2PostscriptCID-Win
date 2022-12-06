@@ -1153,8 +1153,8 @@ int main(int argc, char* argv[])
     const char* ptr;
     char* strTrueTypeFontFile = argv[argIdx];       // ttf filename
     if (!(ptr = strstr(strTrueTypeFontFile, ".ttf"))) {
-        fprintf(stdout, "Input file '%s' does not have file extension 'ttf'.", strTrueTypeFontFile);
-        fprintf(stdout, "\nhit any key....");	getchar();
+        fprintf(stderr, "Input file '%s' does not have file extension 'ttf'.", strTrueTypeFontFile);
+        fprintf(stderr, "\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
     const short lcFileNameSize = 256;
