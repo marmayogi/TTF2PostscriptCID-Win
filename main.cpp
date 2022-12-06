@@ -162,12 +162,12 @@ void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record*
     for (short ii = 0; ii < lcLoop; ii++) {// Total Pages
         for (short jj = 0, cntGlyphPerPage = 0; jj < 8; jj++) {
             unsigned int titlecode = ii * 128 + (jj << 4);
+            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
+            fprintf(fps, "50 775 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at paper.
             fprintf(fps, "10 %s\n", pTitleFontName);													// set font to print table title
             fprintf(fps, "50 %d add 760 moveto (%d) show\n", 68 * jj, titlecode);						// print column title
             fprintf(fps, "50 750 moveto %d 0 rlineto stroke\n", 530);									// Horizontal line
             fprintf(fps, "35 735 moveto 0 -%d rlineto stroke\n", 660);									// Vertical line
-            fprintf(fps, "13 %s\n", pTitleFontName);													// set font to print table title
-            fprintf(fps, "50 790 530 (Glyph) CTXT\n");													// Write title 'Glyph' by centering at paper.
             for (short kk = 0; kk < 16; kk++) {
                 if (lcResidual && ii == lcLoop - 1 && cntGlyphPerPage == lcResidual) goto Label_Getout; // All glyphs are printed so getout.
                 uint16_t cid = ii * 128 + jj * 16 + kk;													// CID value corresponding to the Glyph. Range is between 0 and pTotalGlyphs-1.
