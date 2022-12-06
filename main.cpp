@@ -143,8 +143,8 @@ void printAlphabet_T42(FILE* fps, const STTFCmapTable_SequentialMapGroup_Record*
     STTFCmapTable_SequentialMapGroup_Record* grec = NULL;
     grec = new STTFCmapTable_SequentialMapGroup_Record[pTotalGroupRecords];
     if (!grec) {
-        fprintf(stdout, " printAlphabet_T42(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", pTotalGroupRecords); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " printAlphabet_T42(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", pTotalGroupRecords); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     const size_t size = sizeof(STTFCmapTable_SequentialMapGroup_Record) * pTotalGroupRecords;                                           // size of total records
     memcpy_s(static_cast<void*>(grec), size, static_cast<const void*>(pGroupRecord), size);                                             // transfer records.
@@ -239,8 +239,8 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
     STTFCmapTable_GRecord* grec = NULL;
     grec = new STTFCmapTable_GRecord[cntGrpRecords];
     if (!grec) {
-        fprintf(stdout, " printAlphabet_T42(): Memory Allocation error of Cmap. cntGrpRecords: %d.\n", cntGrpRecords); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " printAlphabet_T42(): Memory Allocation error of Cmap. cntGrpRecords: %d.\n", cntGrpRecords); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     uint16_t kk = 0;            // Ranges between 0 and cntGrpRecords-1
     for (uint16_t ii = 0; ii < pSegCount-1; ii++) {
@@ -259,14 +259,14 @@ void printAlphabet_T42(FILE* fttf, FILE* fps, const long pOffsetIdRangeOffset, c
                 uint16_t OffsetInBytes = ii * 2 + pSegArray.idRangeOffset[ii] + 2 * jj;     // (pSegArray.startCode[ii + jj] - pSegArray.startCode[ii]);
                 long glyphIndexAddress = pOffsetIdRangeOffset + OffsetInBytes;
                 if (fseek(fttf, glyphIndexAddress, SEEK_SET)) {
-                    fprintf(stdout, " printAlphabet_T42(): File seek error in 'cmap` table. glyphIndexAddress: %ld, Error(%d)\n", glyphIndexAddress, errno); // error
-                    fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                    fprintf(stderr, " printAlphabet_T42(): File seek error in 'cmap` table. glyphIndexAddress: %ld, Error(%d)\n", glyphIndexAddress, errno); // error
+                    fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
                 }
                 uint16_t glyphid;
                 fread(&glyphid, sizeof(uint16_t), 1, fttf);
                 if (errno) {
-                    fprintf(stdout, " printAlphabet_T42(): File error while reading object glyphid. Error(%d)\n", errno); // error
-                    fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                    fprintf(stderr, " printAlphabet_T42(): File error while reading object glyphid. Error(%d)\n", errno); // error
+                    fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
                 }
                 glyphid = SWAPWORD(glyphid);                                                        // convert to little endian.
                 if (glyphid) glyphid += pSegArray.idDelta[ii];                                      // find out Glyph id.
@@ -417,29 +417,29 @@ void debugSwap()
 
 
     uint16_t val_16 = 0x6475;
-    printf("Big Endian     : 0x%04x\n", val_16);
-    printf("  High byte    : 0x%02x\n", HIBYTE(val_16));
-    printf("  Low Byte     : 0x%02x\n", LOBYTE(val_16));
-    printf("Little Endian  : 0x%04x\n\n", SWAPWORD(val_16));
+    fprintf(stdout, "Big Endian     : 0x%04x\n", val_16);
+    fprintf(stdout, "  High byte    : 0x%02x\n", HIBYTE(val_16));
+    fprintf(stdout, "  Low Byte     : 0x%02x\n", LOBYTE(val_16));
+    fprintf(stdout, "Little Endian  : 0x%04x\n\n", SWAPWORD(val_16));
 
     uint32_t val_32 = 0x15251626;
-    printf("Big Endian     : 0x%08x\n", val_32);
-    printf("  High Word    : 0x%02x\n", LOWORD(val_32));
-    printf("  Low Word     : 0x%02x\n", HIWORD(val_32));
-    printf("Little Endian  : 0x%08x\n\n", SWAPLONG(val_32));
+    fprintf(stdout, "Big Endian     : 0x%08x\n", val_32);
+    fprintf(stdout, "  High Word    : 0x%02x\n", LOWORD(val_32));
+    fprintf(stdout, "  Low Word     : 0x%02x\n", HIWORD(val_32));
+    fprintf(stdout, "Little Endian  : 0x%08x\n\n", SWAPLONG(val_32));
 
     uint64_t val_64 = 0x3848394915251626;           // 38 48 39 49 | 15 25 16 26
 
 #if _MSC_VER			// Visual Studio
-    printf("Big Endian     : 0x%016llx\n", val_64);
-    printf("  High DWord   : 0x%08lx\n", HILONG(val_64));
-    printf("  Low DWord    : 0x%08lx\n", LOLONG(val_64));
-    printf("Little Endian  : 0x%016llx\n\n", SWAPLONGLONG(val_64));
+    fprintf(stdout, "Big Endian     : 0x%016llx\n", val_64);
+    fprintf(stdout, "  High DWord   : 0x%08lx\n", HILONG(val_64));
+    fprintf(stdout, "  Low DWord    : 0x%08lx\n", LOLONG(val_64));
+    fprintf(stdout, "Little Endian  : 0x%016llx\n\n", SWAPLONGLONG(val_64));
 #elif __GNUC__	|| __CYGWIN__		// gcc
-    printf("Big Endian     : 0x%016lx\n", val_64);
-    printf("  High DWord   : 0x%08x\n", HILONG(val_64));
-    printf("  Low DWord    : 0x%08x\n", LOLONG(val_64));
-    printf("Little Endian  : 0x%016lx\n\n", SWAPLONGLONG(val_64));
+    fprintf(stdout, "Big Endian     : 0x%016lx\n", val_64);
+    fprintf(stdout, "  High DWord   : 0x%08x\n", HILONG(val_64));
+    fprintf(stdout, "  Low DWord    : 0x%08x\n", LOLONG(val_64));
+    fprintf(stdout, "Little Endian  : 0x%016lx\n\n", SWAPLONGLONG(val_64));
 #endif
 
 }
@@ -466,16 +466,16 @@ void printString(const char *pString)
     sscanf(pString+20, "%4x", &rangeShift);
 #endif
 
-    printf("\n   ScalarType             NumOfTables    SearchRange      EntrySelector    RangeShift\n");
-    printf("   %u(0x%08X) %*c%u(0x%04X) %*c%u(0x%04X) %*c%u(0x%04X) %*c%u(0x%04X)\n\n",
+    fprintf(stdout, "\n   ScalarType             NumOfTables    SearchRange      EntrySelector    RangeShift\n");
+    fprintf(stdout, "   %u(0x%08X) %*c%u(0x%04X) %*c%u(0x%04X) %*c%u(0x%04X) %*c%u(0x%04X)\n\n",
         scalerType, scalerType,
         5, cSP, numOfTables, numOfTables,
         5, cSP, searchRange, searchRange,
         5, cSP, entrySelector, entrySelector,
         7, cSP, rangeShift, rangeShift
     );
-    printf("        Table     Checksum                       Offset                 Length\n");
-    printf("        ---------------------------------------------------------------------------------\n");
+    fprintf(stdout, "        Table     Checksum                       Offset                 Length\n");
+    fprintf(stdout, "        ---------------------------------------------------------------------------------\n");
     for (uint16_t ii = 0, addr=24; ii < numOfTables; ii++, addr += 32) {
         char tag[4] = {' '};
         unsigned int checksum, offset, length;
@@ -503,7 +503,7 @@ void printString(const char *pString)
         sprintf_s(bufCheckSum, sizeof(bufCheckSum), "%u(0x%08X)", checksum, checksum);
         sprintf_s(bufOffset, sizeof(bufOffset), "%u(0x%08X)", offset, offset);
         sprintf_s(bufLength, sizeof(bufLength), "%u(0x%08X)", length, length);
-        printf("   %2d)  %.*s %*c%-25s %*c%-17s %*c%-17s\n",
+        fprintf(stdout, "   %2d)  %.*s %*c%-25s %*c%-17s %*c%-17s\n",
             ii + 1,
             4, tag,
             5, cSP, bufCheckSum,
@@ -1020,8 +1020,8 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
     uint16_t totalRequiredTables = sizeof(asTablesRequired) / sizeof(char*);
     bool *aFound = new bool[totalRequiredTables];
     if (!aFound) {
-        fprintf(stdout, "convertBinaryToHex(): Boolean Array  Memory Allocation error. Data size: %u\n", totalRequiredTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, "convertBinaryToHex(): Boolean Array  Memory Allocation error. Data size: %u\n", totalRequiredTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
 
     uint16_t totalAvailableTables=0, kk = 0;
@@ -1050,8 +1050,8 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
     uint32_t tableDirLen = sizeof(STTFOffsetSubTable) + sizeof(STTFTableDirectory) * totalAvailableTables;
     char* tabledata = new char[tableDirLen];
     if (!tabledata) {
-        fprintf(stdout, "convertBinaryToHex(): Memory Allocation error. Data size: %u\n", tableDirLen); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, "convertBinaryToHex(): Memory Allocation error. Data size: %u\n", tableDirLen); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     memcpy_s(static_cast<void*>(tabledata), tableDirLen, static_cast<const void*>(&subtable), sizeof(STTFOffsetSubTable));       // copy from object STTFOffsetSubTable.
     uint32_t offsetFromTop = tableDirLen;                           // First table 'cmap' begins at this offset
@@ -1078,18 +1078,18 @@ void embedTablesAsHexStrings_sfnts(FILE *fttf, FILE* fcid, const STTFOffsetSubTa
         //fprintf(stdout, "%2d) Table:%.*s, Offset:%u, length:%u\n", ii, 4, pListOfTables[idx].tag, pListOfTables[idx].offset, pListOfTables[idx].length);
         char *data = new char [pListOfTables[idx].length];
         if (!data) {
-            fprintf(stdout, "convertBinaryToHex(): Memory Allocation error for Table %.*s. Table size: %u\n", 4, pListOfTables[idx].tag, pListOfTables[idx].length); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, "convertBinaryToHex(): Memory Allocation error for Table %.*s. Table size: %u\n", 4, pListOfTables[idx].tag, pListOfTables[idx].length); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         uint32_t seekOffset = pListOfTables[idx].offset;                     // find out seek offset.
         if (fseek(fttf, seekOffset, SEEK_SET)) {
-            fprintf(stdout, " main(): File seek error. Table: %.*s, Offset: %u\n", 4, pListOfTables[idx].tag, pListOfTables[idx].offset); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): File seek error. Table: %.*s, Offset: %u\n", 4, pListOfTables[idx].tag, pListOfTables[idx].offset); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         fread(data, pListOfTables[idx].length, 1, fttf);
         if (errno) {
-            fprintf(stdout, " convertBinaryToHex(): File error while reading Table %.*s with size: %u. Error(%d)\n", 4, pListOfTables[idx].tag, pListOfTables[idx].length, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " convertBinaryToHex(): File error while reading Table %.*s with size: %u. Error(%d)\n", 4, pListOfTables[idx].tag, pListOfTables[idx].length, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         writeHexData(fcid, data, pListOfTables[idx].length);
         delete []data;                                          // release data allocated memory.
@@ -1147,14 +1147,14 @@ int main(int argc, char* argv[])
         fprintf(stdout, "usage: ./ttf2postscriptcid -d filename.ttf\n");
 #endif
         fprintf(stdout, "       -d display reports.\n");
-        printf("\nhit any key....");	getchar();
+        fprintf(stdout, "\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
     const char* ptr;
     char* strTrueTypeFontFile = argv[argIdx];       // ttf filename
     if (!(ptr = strstr(strTrueTypeFontFile, ".ttf"))) {
         fprintf(stdout, "Input file '%s' does not have file extension 'ttf'.", strTrueTypeFontFile);
-        printf("\nhit any key....");	getchar();
+        fprintf(stdout, "\nhit any key....");	getchar();
         return(1);				// exit with error 1
     }
     const short lcFileNameSize = 256;
@@ -1170,46 +1170,46 @@ int main(int argc, char* argv[])
 
 #if _MSC_VER			// Visual Studio
     if (fopen_s(&fttf, strTrueTypeFontFile, sFileMode)) {
-        printf("File name: %s\n", strTrueTypeFontFile);
+        fprintf(stderr, "File name: %s\n", strTrueTypeFontFile);
         perror("The following error occurred");return (1);
     }
-    else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
+    else fprintf(stdout, "\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (fopen_s(&fcid, t42Filenamet, "w")) {
-        printf("File name: %s\n", t42Filenamet);
+        fprintf(stderr, "File name: %s\n", t42Filenamet);
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s is opened for writing\n", t42Filenamet);
+    else fprintf(stdout, "File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (fopen_s(&fps, psFilename, "w")) {
-        printf("File name: %s\n", psFilename);
+        fprintf(stderr, "File name: %s\n", psFilename);
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s is opened for writing\n", psFilename);
+    else fprintf(stdout, "File %s is opened for writing\n", psFilename);
 
 #elif __GNUC__	|| __CYGWIN__		// gcc
     if (!(fttf = fopen(strTrueTypeFontFile, sFileMode))) {
-        printf("File name: %s\n", strTrueTypeFontFile);
+        fprintf(stderr, "File name: %s\n", strTrueTypeFontFile);
         perror("The following error occurred");
 	  return (1);
     }
-    else printf("\nFile %s is opened for reading\n", strTrueTypeFontFile);
+    else fprintf(stdout, "\nFile %s is opened for reading\n", strTrueTypeFontFile);
     // open t42 file to write
     if (!(fcid = fopen(t42Filenamet, "w"))) {
-        printf("File name: %s\n", t42Filenamet);
+        fprintf(stderr, "File name: %s\n", t42Filenamet);
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s is opened for writing\n", t42Filenamet);
+    else fprintf(stdout, "File %s is opened for writing\n", t42Filenamet);
     // open ps file to write
     if (!(fps = fopen(psFilename, "w"))) {
-        printf("File name: %s\n", psFilename);
+        fprintf(stderr, "File name: %s\n", psFilename);
         perror("The following error occurred");
         return (1);
     }
-    else printf("File %s is opened for writing\n", psFilename);
+    else fprintf(stdout, "File %s is opened for writing\n", psFilename);
 
 #endif
 
@@ -1217,8 +1217,8 @@ int main(int argc, char* argv[])
     STTFOffsetSubTable ttfSubTable;
     fread(&ttfSubTable, sizeof(STTFOffsetSubTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFOffsetSubTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFOffsetSubTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
 
     ttfSubTable.scalerType = SWAPLONG(ttfSubTable.scalerType);	  // A tag to indicate the OFA scaler to be used to rasterize this font. Fonts with TrueType outlines produced for OS X or iOS only are encouraged to use 'true' (0x74727565) for the scaler type value. Fonts for Windows or Adobe products must use 0x00010000.
@@ -1231,14 +1231,14 @@ int main(int argc, char* argv[])
     // List of Tables
     STTFTableDirectory* listOfTables = new STTFTableDirectory[numOfTables];
     if (!listOfTables) {
-        fprintf(stdout, " main(): Memory Allocation error of Names. Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Memory Allocation error of Names. Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     for (short ii = 0; ii < numOfTables; ii++) {
         fread(listOfTables + ii, sizeof(STTFTableDirectory), 1, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object STTFTableDirectory(%d/%d). Error(%d)\n", ii, numOfTables, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object STTFTableDirectory(%d/%d). Error(%d)\n", ii, numOfTables, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         listOfTables[ii].checksum = SWAPLONG(listOfTables[ii].checksum);    // Check sum
         listOfTables[ii].offset = SWAPLONG(listOfTables[ii].offset);        // Offset from beginning of file
@@ -1249,18 +1249,18 @@ int main(int argc, char* argv[])
     // Name Table
     const short idxNameTable = getTable(listOfTables, numOfTables, "name");        // collect index corresponding to 'name' table.   
     if (idxNameTable == -1) {
-        fprintf(stdout, " main(): The 'name' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): The 'name' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxNameTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxNameTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxNameTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFNameTable nameTable;
     fread(&nameTable, sizeof(STTFNameTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFNameTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFNameTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     nameTable.format = SWAPWORD(nameTable.format);                  //format selector. Always 0
     nameTable.nrCount = SWAPWORD(nameTable.nrCount);                // The number of nameRecords in this name table.
@@ -1270,14 +1270,14 @@ int main(int argc, char* argv[])
     // Name Records
     STTFNameRecord* listOfNameRecords = new STTFNameRecord[cntNameRecord];
     if (!listOfNameRecords) {
-        fprintf(stdout, " main(): Memory Allocation error of Names. Total Name Records: %d.\n", cntNameRecord); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Memory Allocation error of Names. Total Name Records: %d.\n", cntNameRecord); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     for (short ii = 0; ii < cntNameRecord; ii++) {
         fread(listOfNameRecords + ii, sizeof(STTFNameRecord), 1, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object STTFNameRecord (%d/%d). Error(%d)\n", ii, cntNameRecord, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object STTFNameRecord (%d/%d). Error(%d)\n", ii, cntNameRecord, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         listOfNameRecords[ii].platformID = SWAPWORD(listOfNameRecords[ii].platformID);                   // Platform identifier code.
         listOfNameRecords[ii].platformSpecificID = SWAPWORD(listOfNameRecords[ii].platformSpecificID);   // Platform-specific encoding identifier.
@@ -1288,8 +1288,8 @@ int main(int argc, char* argv[])
     }
     char** nameList = new char*[cntNameRecord];
     if (!nameList) {
-        fprintf(stdout, "main(): Memory Allocation error for namelist. Count of Name Records: %d\n", cntNameRecord); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, "main(): Memory Allocation error for namelist. Count of Name Records: %d\n", cntNameRecord); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     for (short ii = 0; ii < cntNameRecord; ii++) {
         nameList[ii] = NULL;		// initialize each pointer with NULL
@@ -1298,18 +1298,18 @@ int main(int argc, char* argv[])
     //printf("offset=%lu stringOffset=%u\n", listOfTables[idxNameTable].offset, nameTable.stringOffset); getchar();
     for (short ii = 0; ii < cntNameRecord; ii++) {
         if (!(nameList[ii] = new char[listOfNameRecords[ii].length + 1])) {
-            fprintf(stdout, "main(): Memory Allocation error for nameList(%d/%d)\n", ii, cntNameRecord); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, "main(): Memory Allocation error for nameList(%d/%d)\n", ii, cntNameRecord); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         uint32_t seekOffset = listOfTables[idxNameTable].offset + nameTable.stringOffset + listOfNameRecords[ii].offset;     // find out seek offset.
         if (fseek(fttf, seekOffset, SEEK_SET)) {
-            fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxNameTable].offset); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxNameTable].offset); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         fread(nameList[ii], listOfNameRecords[ii].length, 1, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object nameList (%d/%d). Error(%d)\n", ii, cntNameRecord, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object nameList (%d/%d). Error(%d)\n", ii, cntNameRecord, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         // Names are stored in two bytes
         for (short jj = 0, kk=0; jj <= listOfNameRecords[ii].length/2; jj++, kk+=2) {       // length will be always an even number
@@ -1322,18 +1322,18 @@ int main(int argc, char* argv[])
     // Head table
     const short idxHeadTable = getTable(listOfTables, numOfTables, "head");       // collect index corresponding to 'head' table.
     if (idxHeadTable == -1) {
-        fprintf(stdout, " main(): the 'head' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): the 'head' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxHeadTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxHeadTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxHeadTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFHeadTable headTable;
     fread(&headTable, sizeof(STTFHeadTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFHeadTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFHeadTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
 
     /**
@@ -1376,18 +1376,18 @@ int main(int argc, char* argv[])
     // Hhea table
     const short idxHheaTable = getTable(listOfTables, numOfTables, "hhea");    // collect index corresponding to 'hhea' table.
     if (idxHheaTable == -1) {
-        fprintf(stdout, " main(): The 'hhea' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): The 'hhea' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxHheaTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxHheaTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxHheaTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFHheaTable hheaTable;
     fread(&hheaTable, sizeof(STTFHheaTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFHheaTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFHheaTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     hheaTable.version.whole = SWAPWORD(hheaTable.version.whole);                // Version (whole part). 0x00010000 if (version 1.0)
     hheaTable.version.frac = SWAPWORD(hheaTable.version.frac);                  // Version (fractional part)
@@ -1412,18 +1412,18 @@ int main(int argc, char* argv[])
     // Cmap Table
     const short idxCmapTable = getTable(listOfTables, numOfTables, "cmap");        // collect index corresponding to 'cmap' table.   
     if (idxCmapTable == -1) {
-        fprintf(stdout, " main(): The 'cmap' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): The 'cmap' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxCmapTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxCmapTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxCmapTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFCMapTable_Header cmapTable;
     fread(&cmapTable, sizeof(STTFCMapTable_Header), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFCMapTable_Header. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFCMapTable_Header. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     cmapTable.version = SWAPWORD(cmapTable.version);                // Table version number (0).
     cmapTable.numTables = SWAPWORD(cmapTable.numTables);            // Number of encoding tables that follow. Note that only one of these encoding subtables is used at a time.
@@ -1431,14 +1431,14 @@ int main(int argc, char* argv[])
 
     STTFCmapTable_Encoding* cmapSubTableList = new STTFCmapTable_Encoding[cmapEncodingRecord];
     if (!cmapSubTableList) {
-        fprintf(stdout, " main(): Memory Allocation error of Cmap. Total Encoding SubTables: %d.\n", cmapEncodingRecord); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Memory Allocation error of Cmap. Total Encoding SubTables: %d.\n", cmapEncodingRecord); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     for (short ii = 0; ii < cmapEncodingRecord; ii++) {
         fread(cmapSubTableList+ii, sizeof(STTFCmapTable_Encoding), 1, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object cmapSubTableList (%d/%d). Error(%d)\n", ii, cmapEncodingRecord, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object cmapSubTableList (%d/%d). Error(%d)\n", ii, cmapEncodingRecord, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         cmapSubTableList[ii].platformID = SWAPWORD(cmapSubTableList[ii].platformID);                    // Platform identifier. 0=Unicode, 1=Macintosh, 2=reserved and 3=Microsoft
         cmapSubTableList[ii].platformSpecificID = SWAPWORD(cmapSubTableList[ii].platformSpecificID);    // Platform-specific encoding ID.
@@ -1459,13 +1459,13 @@ int main(int argc, char* argv[])
             if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 3) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
-                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u, Error(%d)\n", seekOffset, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File seek error in 'cmap` table. Offset: %u, Error(%d)\n", seekOffset, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             fread(&cmapFormat_4, sizeof(STTFCmapTable_Format_4), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFCmapTable_Format_4. Error(%d)\n", errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFCmapTable_Format_4. Error(%d)\n", errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             cmapFormat_4.format = SWAPWORD(cmapFormat_4.format);                    // Subtable format; set to 4.
             cmapFormat_4.length = SWAPWORD(cmapFormat_4.length);                    // This is the length in bytes of the subtable.
@@ -1477,55 +1477,55 @@ int main(int argc, char* argv[])
             segcount = cmapFormat_4.segCountX2 / 2;                                 // segment count;
             segArray.endCode = new uint16_t[segcount];
             if (!segArray.endCode) {
-                fprintf(stdout, " main(): Memory Allocation error of Cmap::endCode: segcount: %d.\n", segcount); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): Memory Allocation error of Cmap::endCode: segcount: %d.\n", segcount); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             segArray.startCode = new uint16_t[segcount];
             if (!segArray.startCode) {
-                fprintf(stdout, " main(): Memory Allocation error of Cmap::startCode: segcount: %d.\n", segcount); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): Memory Allocation error of Cmap::startCode: segcount: %d.\n", segcount); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             segArray.idDelta = new int16_t[segcount];
             if (!segArray.idDelta) {
-                fprintf(stdout, " main(): Memory Allocation error of Cmap::idDelta: segcount: %d.\n", segcount); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): Memory Allocation error of Cmap::idDelta: segcount: %d.\n", segcount); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             segArray.idRangeOffset = new uint16_t[segcount];
             if (!segArray.idRangeOffset) {
-                fprintf(stdout, " main(): Memory Allocation error of Cmap::idRangeOffset: segcount: %d.\n", segcount); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): Memory Allocation error of Cmap::idRangeOffset: segcount: %d.\n", segcount); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array endcode
             fread(segArray.endCode, sizeof(uint16_t), segcount, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object Segment Array endCode. segcount:%d, Error(%d)\n", segcount, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File error while reading object Segment Array endCode. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array reservedPad
             fread(&segArray.reservedPad, sizeof(uint16_t), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object Segment Array reservedPad. Error(%d)\n", errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File error while reading object Segment Array reservedPad. Error(%d)\n", errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array startCode
             fread(segArray.startCode, sizeof(uint16_t), segcount, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object Segment Array startCode. segcount:%d, Error(%d)\n", segcount, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File error while reading object Segment Array startCode. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array idDelta
             fread(segArray.idDelta, sizeof(uint16_t), segcount, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object Segment Array idDelta. segcount:%d, Error(%d)\n", segcount, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File error while reading object Segment Array idDelta. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             // Segment Array idRangeOffset
             offsetIdRangeOffsetFormat_4 = ftell(fttf);                               // file offset at which idRangeOffset begins from beginning of the ttf file.
             //printf("offsetIdRangeOffsetFormat_4: %ld", offsetIdRangeOffsetFormat_4); getchar();
             fread(segArray.idRangeOffset, sizeof(uint16_t), segcount, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object Segment Array idRangeOffset. segcount:%d, Error(%d)\n", segcount, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File error while reading object Segment Array idRangeOffset. segcount:%d, Error(%d)\n", segcount, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             for (uint16_t jj = 0; jj < segcount; jj++) {
                 segArray.endCode[jj] = SWAPWORD(segArray.endCode[jj]);              // convert from beg Endian to little Endian
@@ -1539,13 +1539,13 @@ int main(int argc, char* argv[])
             if (cmapSubTableList[ii].platformID == 3 && getPlatform(cmapSubTableList, cmapEncodingRecord, 0, 4) != -1) continue;     // If Unicode is present then don't process Microsoft because both have same data in STTFCmapTable_Format_4 structure. 
             uint32_t seekOffset = listOfTables[idxCmapTable].offset + cmapSubTableList[ii].offset;      // find out seek offset.
             if (fseek(fttf, seekOffset, SEEK_SET)) {
-                fprintf(stdout, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): File seek error in 'cmap` table. Offset: %u\n", seekOffset); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             fread(&cmapFormat_12, sizeof(STTFCmapTable_Format_12), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFCmapTable_Format_12. Error(%d)\n", errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFCmapTable_Format_12. Error(%d)\n", errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             cmapFormat_12.format = SWAPWORD(cmapFormat_12.format);              // Subtable format; set to 12.
             cmapFormat_12.reserved = SWAPWORD(cmapFormat_12.reserved);          // Reserved; set to 0.
@@ -1554,13 +1554,13 @@ int main(int argc, char* argv[])
             cmapFormat_12.numGroups = SWAPLONG(cmapFormat_12.numGroups);        // Number of groupings which follow.
             groupRecord = new STTFCmapTable_SequentialMapGroup_Record[cmapFormat_12.numGroups];
             if (!groupRecord) {
-                fprintf(stdout, " main(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", cmapFormat_12.numGroups); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+                fprintf(stderr, " main(): Memory Allocation error of Cmap. SequentialMapGroup_Record: %d.\n", cmapFormat_12.numGroups); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
             }
             fread(groupRecord, sizeof(STTFCmapTable_SequentialMapGroup_Record), cmapFormat_12.numGroups, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFCmapTable_SequentialMapGroup_Record. numGroups:%d, Error(%d)\n", cmapFormat_12.numGroups, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFCmapTable_SequentialMapGroup_Record. numGroups:%d, Error(%d)\n", cmapFormat_12.numGroups, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             for (uint32_t jj = 0; jj < cmapFormat_12.numGroups; jj++) {
                 groupRecord[jj].startCharCode = SWAPLONG(groupRecord[jj].startCharCode);    // First character code in this group.
@@ -1575,18 +1575,18 @@ int main(int argc, char* argv[])
     // Maxp table
     const short idxMaxpTable = getTable(listOfTables, numOfTables, "maxp");     // collect index corresponding to 'maxp' table.
     if (idxMaxpTable == -1) {
-        fprintf(stdout, " main(): Maxp Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Maxp Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxMaxpTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxMaxpTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxMaxpTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFMaxpTable maxpTable;         // Maximum Profile table
     fread(&maxpTable, sizeof(STTFMaxpTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFMaxpTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFMaxpTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     maxpTable.version.whole = SWAPWORD(maxpTable.version.whole);                    // Version (whole part). 0x00010000 if (version 1.0)
     maxpTable.version.frac = SWAPWORD(maxpTable.version.frac);                      // Version (fractional part)
@@ -1608,18 +1608,18 @@ int main(int argc, char* argv[])
     // Post table
     const short idxPostTable = getTable(listOfTables, numOfTables, "post");     // collect index corresponding to 'maxp' table.
     if (idxPostTable == -1) {
-        fprintf(stdout, " main(): Post Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Post Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxPostTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxPostTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxPostTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFPostTable postTable;         // Maximum Profile table
     fread(&postTable, sizeof(STTFPostTable), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFPostTable. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFPostTable. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     postTable.format.whole = SWAPWORD(postTable.format.whole);              // Format of this table: {0x00010000 for version 1.0, 0x00020000 for version 2.0, 0x00025000 for version 2.5, 0x00030000 for version 3.0}
     postTable.format.frac = SWAPWORD(postTable.format.frac);                // Format of this table (fractional part).
@@ -1637,18 +1637,18 @@ int main(int argc, char* argv[])
     // OS/2 table
     const short idxOS2Table = getTable(listOfTables, numOfTables, "os/2");     // collect index corresponding to 'maxp' table.
     if (idxOS2Table == -1) {
-        fprintf(stdout, " main(): OS/2 Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): OS/2 Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxOS2Table].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxOS2Table].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxOS2Table].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     STTFOS2Table os2Table;         // Maximum Profile table
     fread(&os2Table, sizeof(STTFOS2Table), 1, fttf);
     if (errno) {
-        fprintf(stdout, " main(): File error while reading object STTFOS2Table. Error(%d)\n", errno); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File error while reading object STTFOS2Table. Error(%d)\n", errno); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     os2Table.version = SWAPWORD(os2Table.version);                          // 0x0005
     os2Table.xAvgCharWidth = SWAPWORD(os2Table.xAvgCharWidth);              // average weighted advance width of lower case letters and space.
@@ -1692,12 +1692,12 @@ int main(int argc, char* argv[])
     // Hmtx table
     const short idxHmtxTable = getTable(listOfTables, numOfTables, "hmtx");     // collect index corresponding to 'hmtx' table.
     if (idxHmtxTable == -1) {
-        fprintf(stdout, " main(): The 'hmtx' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): The 'hmtx' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxHmtxTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxHmtxTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxHmtxTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
 
     const uint16_t numOfGlyphs = maxpTable.numGlyphs;                                               // the number of glyphs in the font
@@ -1705,14 +1705,14 @@ int main(int argc, char* argv[])
     STTFHmtxTable_LeftSideBearings* listOfTableHmtx_LSBearings = NULL;                              // Initialize with NULL.
     STTFHmtxTable_HMetrix* listOfTableHmtx_Hmetrix = new STTFHmtxTable_HMetrix[numberOfHMetrics];   // Allocate memeory
     if (!listOfTableHmtx_Hmetrix) {
-        fprintf(stdout, " main(): Memory Allocation error for object STTFHmtxTable_HMetrix. Total Metrix: %d.\n", numberOfHMetrics); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): Memory Allocation error for object STTFHmtxTable_HMetrix. Total Metrix: %d.\n", numberOfHMetrics); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     for (uint16_t ii = 0; ii < numberOfHMetrics; ii++) {
         fread(listOfTableHmtx_Hmetrix + ii, sizeof(STTFHmtxTable_HMetrix), 1, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object STTFHmtxTable_HMetrix(%d/%d). Error(%d)\n", ii, numberOfHMetrics, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object STTFHmtxTable_HMetrix(%d/%d). Error(%d)\n", ii, numberOfHMetrics, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
         listOfTableHmtx_Hmetrix[ii].advanceWidth = SWAPWORD(listOfTableHmtx_Hmetrix[ii].advanceWidth);  // Advance width, in font design units.
         listOfTableHmtx_Hmetrix[ii].lsb = SWAPWORD(listOfTableHmtx_Hmetrix[ii].lsb);                    // Glyph left side bearing, in font design units.
@@ -1721,14 +1721,14 @@ int main(int argc, char* argv[])
         const uint16_t remainingGlyphs = numOfGlyphs - numberOfHMetrics;                                    // remaining.
         listOfTableHmtx_LSBearings = new STTFHmtxTable_LeftSideBearings[remainingGlyphs];                   // Allocate memeory
         if (!listOfTableHmtx_LSBearings) {
-            fprintf(stdout, " main(): Memory Allocation error for object STTFHmtxTable_LeftSideBearings. Reaminig Glyphs: %d.\n", remainingGlyphs); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFHmtxTable_LeftSideBearings. Reaminig Glyphs: %d.\n", remainingGlyphs); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         for (uint16_t ii = 0; ii < remainingGlyphs; ii++) {
             fread(listOfTableHmtx_LSBearings + ii, sizeof(STTFHmtxTable_LeftSideBearings), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFHmtxTable_LeftSideBearings(%d/%d). Error(%d)\n", ii, remainingGlyphs, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFHmtxTable_LeftSideBearings(%d/%d). Error(%d)\n", ii, remainingGlyphs, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             listOfTableHmtx_LSBearings[ii].leftSideBearings = SWAPWORD(listOfTableHmtx_LSBearings[ii].leftSideBearings);    // Here the advanceWidth is assumed to be the same as the advanceWidth for the last entry above structure.
         }
@@ -1738,12 +1738,12 @@ int main(int argc, char* argv[])
     // Loca table
     const short idxLocaTable = getTable(listOfTables, numOfTables, "loca");     // collect index corresponding to 'loca' table.
     if (idxLocaTable == -1) {
-        fprintf(stdout, " main(): The 'loca' Table is not present: Total Tables: %d.\n", numOfTables); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): The 'loca' Table is not present: Total Tables: %d.\n", numOfTables); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     if (fseek(fttf, listOfTables[idxLocaTable].offset, SEEK_SET)) {
-        fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxLocaTable].offset); // error
-        fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+        fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxLocaTable].offset); // error
+        fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
     }
     const uint16_t numOfLocaOffsets = maxpTable.numGlyphs + 1;              // Total number of offsets of table 'loca'.
     STTFLocaTable_Short* listOfLocaOffsets_short = NULL;                    // Initialize with NULL.
@@ -1751,14 +1751,14 @@ int main(int argc, char* argv[])
     if (headTable.indexToLocFormat) {     // {0 for short offsets, 1 for long}
         listOfLocaOffsets_long = new STTFLocaTable_Long[numOfLocaOffsets];   // Allocate memeory
         if (!listOfLocaOffsets_long) {
-            fprintf(stdout, " main(): Memory Allocation error for object STTFLocaTable_long. Total Offsets: %d.\n", numOfLocaOffsets); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFLocaTable_long. Total Offsets: %d.\n", numOfLocaOffsets); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         for (uint16_t ii = 0; ii < numOfLocaOffsets; ii++) {
             fread(listOfLocaOffsets_long + ii, sizeof(STTFLocaTable_Long), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFLocaTable_Long(%d/%d). Error(%d)\n", ii, numOfLocaOffsets, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFLocaTable_Long(%d/%d). Error(%d)\n", ii, numOfLocaOffsets, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             listOfLocaOffsets_long[ii].offsets = SWAPLONG(listOfLocaOffsets_long[ii].offsets);  // 'loca' Table: long version.
         }
@@ -1766,14 +1766,14 @@ int main(int argc, char* argv[])
     else {// short
         listOfLocaOffsets_short = new STTFLocaTable_Short[numOfLocaOffsets];   // Allocate memeory
         if (!listOfLocaOffsets_short) {
-            fprintf(stdout, " main(): Memory Allocation error for object STTFLocaTable_Short. Total Offsets: %d.\n", numOfLocaOffsets); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFLocaTable_Short. Total Offsets: %d.\n", numOfLocaOffsets); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         for (uint16_t ii = 0; ii < numOfLocaOffsets; ii++) {
             fread(listOfLocaOffsets_short + ii, sizeof(STTFLocaTable_Short), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFLocaTable_Short(%d/%d). Error(%d)\n", ii, numOfLocaOffsets, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFLocaTable_Short(%d/%d). Error(%d)\n", ii, numOfLocaOffsets, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             listOfLocaOffsets_short[ii].offsets = SWAPWORD(listOfLocaOffsets_short[ii].offsets);  // 'loca' Table: short version.
         }
@@ -1786,19 +1786,19 @@ int main(int argc, char* argv[])
     const short idxPrepTable = getTable(listOfTables, numOfTables, "prep");     // collect index corresponding to 'prep' table.
     if (idxPrepTable != -1) {
         if (fseek(fttf, listOfTables[idxPrepTable].offset, SEEK_SET)) {
-            fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxPrepTable].offset); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxPrepTable].offset); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         lengthOfPrepTable = listOfTables[idxPrepTable].length;                 // length of the 'prep' table in bytes
         listOfPrep = new STTFPrepTable[lengthOfPrepTable];      // Allocate memeory
         if (!listOfPrep) {
-            fprintf(stdout, " main(): Memory Allocation error for object STTFPrepTable. Total Offsets: %d.\n", lengthOfPrepTable); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFPrepTable. Total Offsets: %d.\n", lengthOfPrepTable); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         fread(listOfPrep, sizeof(STTFPrepTable), lengthOfPrepTable, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object STTFPrepTable(%d). Error(%d)\n", lengthOfPrepTable, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object STTFPrepTable(%d). Error(%d)\n", lengthOfPrepTable, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
     }
 
@@ -1808,18 +1808,18 @@ int main(int argc, char* argv[])
     const short idxFpgmTable = getTable(listOfTables, numOfTables, "fpgm");     // collect index corresponding to 'fpgm' table.
     if (idxFpgmTable != -1) {
         if (fseek(fttf, listOfTables[idxFpgmTable].offset, SEEK_SET)) {
-            fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxFpgmTable].offset); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxFpgmTable].offset); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         uint32_t lengthOfFpgmTable = listOfTables[idxFpgmTable].length;                 // length of the 'fpgm' table in bytes
         if (!(listOfFpgm = new STTFFpgmTable[lengthOfFpgmTable])) {                      // Allocate memeory
-            fprintf(stdout, " main(): Memory Allocation error for object STTFFpgmTable. Total Offsets: %d.\n", lengthOfFpgmTable); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFFpgmTable. Total Offsets: %d.\n", lengthOfFpgmTable); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         fread(listOfFpgm, sizeof(STTFFpgmTable), lengthOfFpgmTable, fttf);
         if (errno) {
-            fprintf(stdout, " main(): File error while reading object STTFFpgmTable(%d). Error(%d)\n", lengthOfFpgmTable, errno); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+            fprintf(stderr, " main(): File error while reading object STTFFpgmTable(%d). Error(%d)\n", lengthOfFpgmTable, errno); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
         }
     }
 
@@ -1828,20 +1828,20 @@ int main(int argc, char* argv[])
     const short idxCvtTable = getTable(listOfTables, numOfTables, "cvt");     // collect index corresponding to 'cvt' table.
     if (idxCvtTable != -1) {
         if (fseek(fttf, listOfTables[idxCvtTable].offset, SEEK_SET)) {
-            fprintf(stdout, " main(): File seek error. Offset: %u\n", listOfTables[idxCvtTable].offset); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): File seek error. Offset: %u\n", listOfTables[idxCvtTable].offset); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         uint32_t lengthOfCvtTable = listOfTables[idxCvtTable].length;                 // length of the 'cvt' table in bytes
-        printf("lengthOfCvtTable=%d\n", lengthOfCvtTable);
+        fprintf(stdout, "lengthOfCvtTable=%d\n", lengthOfCvtTable);
         if (!(listOfCvt = new STTFCvtTable[lengthOfCvtTable])) {               // Allocate memeory
-            fprintf(stdout, " main(): Memory Allocation error for object STTFCvtTable. Total Offsets: %u.\n", lengthOfCvtTable); // error
-            fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
+            fprintf(stderr, " main(): Memory Allocation error for object STTFCvtTable. Total Offsets: %u.\n", lengthOfCvtTable); // error
+            fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 		exit(1);
         }
         for (uint16_t ii = 0; ii < lengthOfCvtTable; ii++) {
             fread(listOfCvt + ii, sizeof(STTFCvtTable), 1, fttf);
             if (errno) {
-                fprintf(stdout, " main(): File error while reading object STTFCvtTable(%d/%d). Error(%d)\n", ii, lengthOfCvtTable, errno); // error
-                fprintf(stdout, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
+                fprintf(stderr, " main(): File error while reading object STTFCvtTable(%d/%d). Error(%d)\n", ii, lengthOfCvtTable, errno); // error
+                fprintf(stderr, "\nHit any key to exit.......\n");		getchar(); 	exit(1);
             }
             listOfCvt[ii].controlValues = SWAPWORD(listOfCvt[ii].controlValues);  // swap word.
         }
