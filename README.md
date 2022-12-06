@@ -23,7 +23,7 @@ This conversion utility has been developed based on `3rd approach`.
 - This utility is a console application developed on Microsoft Visual Studio Community 2022 (64-bit) Edition- Version 17.3.5 under Windows 10.
 - This utility is also available in [Linux platform](https://github.com/marmayogi/TTF2PostscriptCID-Linux).
 - Note that this program is 100% portable across Windows-10 and Linux. i.e. The source files (main.ccp and ttf.h) are same and identical across platforms.
-- My desktop has Ghostscript 10.0.0 version (64 bit) and GSView 5.0 version (64 bit).
+- Ghostscript version is [10.0.0 (64 bit)](https://www.ghostscript.com/releases/gsdnld.html) and GSView version is [5.0 (64 bit)](http://ghostgum.com.au/software/gsview.htm).
 
 
 ##### References
