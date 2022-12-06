@@ -2011,13 +2011,14 @@ int main(int argc, char* argv[])
 
     // completed successfully
     fprintf(stdout, "\nConversion has been successfully completed and the following two files have been generated.\n");
-    fprintf(stdout, "  1. %s is the converted file corresponding to the TrueType font %s.\n", t42Filenamet, strTrueTypeFontFile);
+    fprintf(stdout, "  1. '%s' is the converted file corresponding to the TrueType font file '%s'.\n", t42Filenamet, strTrueTypeFontFile);
 #if _MSC_VER			// Visual Studio
-    fprintf(stdout, "  2. %s is a postscript program file executable either through Ghostscript (gswin64c.exe) or through GSView (gsview64.exe).\n", psFilename);
+    fprintf(stdout, "  2. '%s' is a postscript program file executable either through Ghostscript (gswin64c.exe) or through GSView (gsview64.exe).\n", psFilename);
 #elif __GNUC__	|| __CYGWIN__		// gcc
-    fprintf(stdout, "  2. %s is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
+    fprintf(stdout, "  2. '%s' is a postscript program file executable either through Ghostscript (gs) or through GSView (gv).\n", psFilename);
 #endif
     fprintf(stdout, "     This postscript program displays %u Glyphs present in the character set along with the corresponding CIDs and Unicode Points in %d pages.\n", numOfGlyphs, numOfGlyphs/128 + ((numOfGlyphs % 128) > 0));
-    fprintf(stdout, "     Note: Before executing postscript program, make sure that CIDfont file %s is accessible to Ghostscript.\n\n", t42Filenamet);
+    fprintf(stdout, "     Since only around 12%% Glyphs of Indian Languages are alloted 'Code Space' (Unicode Points), the Glyphs with no unicode point will have 'none' printed in the page.\n");
+    fprintf(stdout, "     Note: Before executing postscript program, make sure that CID-Keyed font file '%s' is accessible to Ghostscript.\n\n", t42Filenamet);
     exit(0);
 }
