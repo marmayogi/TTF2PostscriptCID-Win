@@ -98,7 +98,7 @@ This utility has been tested for the following languages successfully.
 
 ##### UTF-8 Support for t42 fonts.
 
-For a Truetype font to be recognized by a Postscript interpreter, it must be enclosed in a Postscript font dictionary as a CID font with CIDFontType 2 and FontType 42. CIDMap maps CID(Character Indetitifer) to Glyph index and enforces Identity mapping as follows:
+For a Truetype font to be recognized by a Postscript interpreter, it must be enclosed in a Postscript font dictionary as a CID font with CIDFontType 2 and FontType 42. CIDMap maps CID(Character Identifier) to Glyph index and enforces Identity mapping as follows:
 ```
 Character code 0 maps to Glyph index 0
 Character code 1 maps to Glyph index 1
