@@ -96,7 +96,7 @@ This utility has been tested for the following languages successfully.
 - The first difference is that PostScript supports `cubic Bézier` curves, where each arc of each glyph is described by `four control` points. TrueType uses `quadratic splines` instead of `cubic`, with each arc having only `three control` points. This offers less control over the shape of the curve.
 -  The second difference is the way they perform `hinting`. Since TrueType was originally targeted to low resolution screen rendering, its hinting system works by adjusting the curves to fit nicely on pixel lattice points, using a fairly elaborate `bytecode mechanism`. To edit the hints of a TrueType font, you must learn ttf's low-level programming language which is daunting task for the typical font designer. PostScript fonts were intended for higher resolution paper prints, and used guidelines to snap curves to right angles at appropriate places. For an Adobe font designer, these hints are pretty easy to understand and declare.
 
-##### UTF-8 Support for t42 fonts.
+##### UTF-8 Support for t42 CID-Keyed fonts.
 
 For a Truetype font to be recognized by a Postscript interpreter, it must be enclosed in a Postscript font dictionary as a CID font with CIDFontType 2 and FontType 42. CIDMap maps CID(Character Identifier) to Glyph index and enforces `Identity Mapping` as follows:
 ```
