@@ -5,7 +5,7 @@
 ##### Microsoft Windows 10.
 ----------------------------------------------------------------------------------------
 ##### Description
-This standalone utility, written in C++, converts `TrueType` fonts to `Type 0` Composite fonts that can be accessible from a postscript program. 
+This standalone utility, written in C++, converts `TrueType` fonts to `Type 0` Composite fonts that can be accessible from a postscript program. Without this conversion no postscript program can access a truetype font! 
 
 **Adobe** supports 3 approaches for conversion of `ttf` fonts to `Type 42` base font.
 1. If `ttf` font contains up to 256 glyphs, then conversion involves wrapping up of TrueType font into a PostScript Type 42 font. The Postscript **show** operator will extract a `single byte` every time.
