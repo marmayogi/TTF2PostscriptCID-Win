@@ -35,7 +35,7 @@ This program has been developed based on the following documents.
 5. [Adobe CMap and CID Font Files Specification #5014 (102 pages PDF, 541k) 11/Jun/1996 Version 1.0](https://adobe-type-tools.github.io/font-tech-notes/pdfs/5014.CIDFont_Spec.pdf)
 
 ##### Usage
-Create a folder `D:\cidfonts` in **D** drive (or any other drive) and store `ttf` file which should be convered. Now issue the following command:
+Create a folder `D:\cidfonts` in **D** drive (or any other drive) and store `ttf` file which needs conversion. Now issue the following command:
 - `ttf2postscriptcid.exe -d "D:\cidfonts\filename.ttf"`
 
 If option **-d** is specified, then `ttf` table data will be displayed during execution.
