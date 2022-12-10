@@ -81,7 +81,7 @@ Note that the strings for `show` operator are in Hexadecimal format embeded with
 For example, the first 4 Hex digits in the 1st string is `0019` whose decimal equivalent is `25`. This maps to glyph `த`.
 
 ##### [Other Indian Languages](https://fonts.google.com/noto/fonts)
-This utility has been tested for the following languages successfully.
+This utility has been tested for the following **Indian languages** successfully.
 1. [Malayalam](https://fonts.google.com/noto/specimen/Noto+Sans+Malayalam)
 2. [Telugu](https://fonts.google.com/noto/specimen/Noto+Sans+Telugu)
 3. [Kannada](https://fonts.google.com/noto/specimen/Noto+Sans+Kannada)
