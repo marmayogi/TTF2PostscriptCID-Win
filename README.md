@@ -41,7 +41,7 @@ Create a folder `D:\cidfonts` in **D** drive (or any other drive) and store `ttf
 If option **-d** is specified, then `ttf` table data will be displayed during execution.
 This utility generates the following two files as output:
 1. **filename.t42** is the required converted file with extension Type 42.
-2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs and Unicode Points. Since only around 12% Glyphs of **Indian Languages** are alloted `Code Space` (Unicode Points), the Glyphs with no unicode point association will have `none` printed.
+2. **filename.ps** is a postscript program file whose execution displays the glyphs present in the character set along with CIDs and Unicode Points. Since only around 12% Glyphs of **Indian Languages** are alloted `Code Space` (Unicode Points), the Glyphs with no unicode points association will have `none` printed.
 3. Invoke Ghostscript to execute a postscript program in order to display glyphs as follows:
     - `gswin64c.exe "D:\cidfonts\filename.t42" "D:\cidfonts\filename.ps"`
 
